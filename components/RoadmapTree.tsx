@@ -13,22 +13,52 @@ interface RoadmapTreeProps {
 export default function RoadmapTree({ nodes, activeNodeId, onNodeSelect }: RoadmapTreeProps) {
   // Sort nodes by order
   const sortedNodes = [...nodes].sort((a, b) => a.order - b.order);
+  const totalNodes = nodes.length;
+  const completedNodes = nodes.filter((n) => n.status === 'completed').length;
+  const activeNode = nodes.find((n) => n.id === activeNodeId);
 
   return (
-    <div className="relative flex flex-col items-center py-10 w-full overflow-y-auto max-h-[calc(100vh-180px)] scrollbar-thin scrollbar-thumb-emerald-500/20">
-      <h3 className="text-sm font-semibold tracking-wider text-emerald-400 uppercase mb-8">Learning Path</h3>
+    <div className="relative flex flex-col items-center py-6 sm:py-10 w-full overflow-y-auto h-full scrollbar-thin scrollbar-thumb-emerald-500/20">
       
-      {/* SVG Connecting Lines */}
-      <div className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-slate-800 -translate-x-1/2 -z-10">
-        <div 
-          className="w-full bg-emerald-500 transition-all duration-1000 ease-out"
-          style={{
-            height: `${((sortedNodes.filter(n => n.status === 'completed').length) / Math.max(sortedNodes.length - 1, 1)) * 100}%`
-          }}
-        />
+      {/* Mobile-only Stats Grid */}
+      <div className="lg:hidden w-full max-w-lg px-4 mb-6 grid grid-cols-2 gap-3 shrink-0 animate-in fade-in slide-in-from-top-4 duration-300">
+        {/* Completed count */}
+        <div className="flex items-center gap-3 bg-slate-900/30 border border-slate-900/60 rounded-xl p-3">
+          <div className="p-2 bg-emerald-950/40 border border-emerald-500/20 text-emerald-400 rounded-lg shrink-0">
+            <CheckCircle2 className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <span className="text-[8px] font-bold tracking-widest text-slate-500 uppercase block">Completed</span>
+            <span className="text-xs font-bold text-slate-100 truncate block">{completedNodes} / {totalNodes}</span>
+          </div>
+        </div>
+
+        {/* Active Target */}
+        <div className="flex items-center gap-3 bg-slate-900/30 border border-slate-900/60 rounded-xl p-3">
+          <div className="p-2 bg-emerald-950/40 border border-emerald-500/20 text-emerald-400 rounded-lg shrink-0">
+            <Play className="w-4 h-4 fill-current animate-pulse" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="text-[8px] font-bold tracking-widest text-slate-500 uppercase block">Active Target</span>
+            <span className="text-xs font-bold text-slate-100 truncate block">
+              {activeNode ? activeNode.title : 'N/A'}
+            </span>
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-12 w-full max-w-lg px-4">
+      <h3 className="text-sm font-semibold tracking-wider text-emerald-400 uppercase mb-8 shrink-0">Learning Path</h3>
+      
+      <div className="relative flex flex-col gap-12 w-full max-w-lg px-4">
+        {/* SVG Connecting Lines */}
+        <div className="absolute top-6 bottom-6 left-1/2 w-0.5 bg-slate-800 -translate-x-1/2 -z-10">
+          <div 
+            className="w-full bg-emerald-500 transition-all duration-1000 ease-out"
+            style={{
+              height: `${((sortedNodes.filter(n => n.status === 'completed').length) / Math.max(sortedNodes.length - 1, 1)) * 100}%`
+            }}
+          />
+        </div>
         {sortedNodes.map((node, index) => {
           const isActive = node.id === activeNodeId;
           const isCompleted = node.status === 'completed';
