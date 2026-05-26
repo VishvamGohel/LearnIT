@@ -462,9 +462,11 @@ export default function Home() {
   // Render the learning dashboard
   return (
     <main className="h-screen max-h-screen flex flex-col p-4 md:p-8 gap-6 max-w-[1600px] mx-auto overflow-hidden animate-in fade-in duration-1000 relative">
-      <header className="w-full shrink-0">
-        <ProgressDashboard roadmap={roadmap} onReset={handleReset} />
-      </header>
+      {!isZenMode && (
+        <header className="w-full shrink-0">
+          <ProgressDashboard roadmap={roadmap} onReset={handleReset} />
+        </header>
+      )}
 
       <section className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0 overflow-hidden relative">
         {/* Left Sidebar: Roadmap */}
