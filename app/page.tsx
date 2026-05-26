@@ -217,6 +217,7 @@ export default function Home() {
         // Update Roadmap if passed
         if (isPassed && activeNode) {
           setRoadmap(prev => {
+            if (!prev) return null;
             const newNodes = [...prev.nodes];
             const currentIndex = newNodes.findIndex(n => n.id === activeNode.id);
             
