@@ -1,0 +1,32 @@
+export type AppStatus = 'idle' | 'assessing' | 'generating' | 'learning';
+
+export interface RoadmapNode {
+  id: string;
+  title: string;
+  description: string;
+  status: 'locked' | 'unlocked' | 'completed' | 'in-progress';
+  order: number;
+  learningMaterial?: string; // Markdown content — generated lazily on node click
+  isLoadingLesson?: boolean; // True while Gemini is generating the lesson
+  checkpointQuestion: string;
+  checkpointOptions?: string[]; // Multiple choice fallback
+  checkpointAnswer: string;
+}
+
+export interface Roadmap {
+  id: string;
+  topic: string;
+  nodes: RoadmapNode[];
+  activeNodeId: string;
+  progressPercentage: number;
+  createdAt: number;
+  userLevel?: string;  // From pre-assessment Q1 e.g. "complete beginner"
+  userFocus?: string;  // From pre-assessment Q2 e.g. "practical applications"
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'model' | 'system';
+  content: string;
+  timestamp: number;
+}
