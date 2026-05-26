@@ -15,7 +15,7 @@ const MermaidDiagram = ({ chart }: { chart: string }) => {
         setSvg(result.svg);
       })
       .catch(e => {
-        setSvg(`<div class="text-red-400 p-4 border border-red-500/20 rounded bg-red-950/20">Failed to render diagram</div>`);
+        setSvg(`<div class="bg-[#0d1117] border border-slate-800 rounded-2xl p-6 my-6 overflow-x-auto shadow-xl"><div class="text-xs text-slate-500 mb-3 uppercase tracking-wider font-bold">Flowchart (Text Fallback)</div><code class="text-sm text-slate-300 font-mono whitespace-pre-wrap">${chart.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></div>`);
       });
   }, [chart]);
 

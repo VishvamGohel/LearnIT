@@ -125,7 +125,8 @@ export default function Home() {
           nodeDescription: node.description,
           topic: currentRoadmap.topic,
           userLevel: currentRoadmap.userLevel || 'beginner',
-          userFocus: currentRoadmap.userFocus || 'general understanding',
+          userGoal: currentRoadmap.userGoal || 'general understanding',
+          userPace: currentRoadmap.userPace || 'standard pace',
         })
       });
       const data = await res.json();
@@ -294,7 +295,8 @@ export default function Home() {
           progressPercentage: 0,
           createdAt: Date.now(),
           userLevel: data.userLevel,
-          userFocus: data.userFocus,
+          userGoal: data.userGoal,
+          userPace: data.userPace,
         };
         setRoadmap(newRoadmap);
         setAppStatus('learning');

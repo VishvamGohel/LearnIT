@@ -3,7 +3,7 @@ import { getGeminiModel } from '@/lib/gemini';
 
 export async function POST(req: Request) {
   try {
-    const { nodeTitle, nodeDescription, topic, userLevel, userFocus } = await req.json();
+    const { nodeTitle, nodeDescription, topic, userLevel, userGoal, userPace } = await req.json();
 
     const prompt = `
 You are a world-class educator and textbook author. Your task is to write an EXTREMELY detailed, 
@@ -14,7 +14,8 @@ self-contained lesson that a student can read and fully understand WITHOUT a tea
 - **Lesson Title**: ${nodeTitle}
 - **Lesson Goal**: ${nodeDescription}
 - **Student's Experience Level**: ${userLevel}
-- **Student's Specific Focus**: ${userFocus}
+- **Student's Primary Goal**: ${userGoal}
+- **Student's Preferred Pace**: ${userPace}
 
 ## Your Mission
 Write a rich, deeply engaging lesson using the LearnIT Learning Framework. The student should 
@@ -29,7 +30,7 @@ You MUST follow this exact 8-section structure. Use the exact headings shown.
 # ${nodeTitle}
 
 ## 🎯 The Hook — Why Does This Even Matter?
-Write 2–3 compelling paragraphs explaining the real-world problem this concept solves.
+Write 1–2 concise but compelling paragraphs explaining the real-world problem this concept solves.
 Make the student feel the *need* for this knowledge before you explain it.
 Use a relatable scenario or story. Answer the question: "Why should I care?"
 
@@ -60,7 +61,7 @@ Provide a concrete, detailed worked example.
 - Use code blocks for any code examples
 
 ## ⚠️ Common Mistakes — What Beginners Always Get Wrong
-List 3–5 specific mistakes beginners make with this concept.
+List 2–3 specific mistakes beginners make with this concept.
 For each mistake:
 - Describe what the beginner does wrong
 - Explain WHY it's wrong
@@ -88,10 +89,11 @@ These should be memorable and scannable for quick review.
 
 IMPORTANT RULES:
 - Write in a warm, encouraging, conversational tone — like a brilliant friend explaining something
+- Be concise and respect the user's time. Avoid fluff.
 - Use **bold** liberally for important terms and concepts
-- The lesson should be at least 800 words in the body sections
+- The lesson should be around 500-600 words in the body sections (about 20-30% shorter than a typical textbook chapter)
 - Adapt the complexity and vocabulary to the student's level: "${userLevel}"
-- Tailor examples and focus areas toward: "${userFocus}"
+- Tailor examples and content depth toward their goal ("${userGoal}") and pace ("${userPace}")
 - Every section is MANDATORY — do not skip any
 `;
 

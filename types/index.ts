@@ -20,8 +20,9 @@ export interface Roadmap {
   activeNodeId: string;
   progressPercentage: number;
   createdAt: number;
-  userLevel?: string;  // From pre-assessment Q1 e.g. "complete beginner"
-  userFocus?: string;  // From pre-assessment Q2 e.g. "practical applications"
+  userLevel?: string;  // e.g. "complete beginner"
+  userGoal?: string;   // e.g. "practical application"
+  userPace?: string;   // e.g. "quick crash course"
 }
 
 export interface ChatMessage {

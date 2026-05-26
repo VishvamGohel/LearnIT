@@ -9,13 +9,15 @@ export async function POST(req: Request) {
     // Extract user context from the assessment transcript
     const userMessages = transcript.filter((t: any) => t.role === 'user');
     const userLevel = userMessages[0]?.content || 'beginner';
-    const userFocus = userMessages[1]?.content || 'general understanding';
+    const userGoal = userMessages[1]?.content || 'general understanding';
+    const userPace = userMessages[2]?.content || 'standard pace';
 
     const prompt = `
 You are an expert curriculum designer and educator.
 The user wants to learn about the topic: "${topic}".
 Their experience level: "${userLevel}"
-Their specific focus: "${userFocus}"
+Their primary goal: "${userGoal}"
+Their preferred pace/depth: "${userPace}"
 
 Based on their experience, generate a highly structured learning roadmap with exactly 3 to 5 sequential nodes.
 For each node, you MUST provide:
@@ -84,7 +86,7 @@ Example format:
       isLoadingLesson: false,
     }));
 
-    return NextResponse.json({ nodes, userLevel, userFocus });
+    return NextResponse.json({ nodes, userLevel, userGoal, userPace });
   } catch (error) {
     console.error("Roadmap generation failed:", error);
     return NextResponse.json({ error: "Failed to generate roadmap" }, { status: 500 });
