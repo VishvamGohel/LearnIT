@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Eye, EyeOff } from 'lucide-react';
 import mermaid from 'mermaid';
 
 mermaid.initialize({ startOnLoad: false, theme: 'dark', suppressErrorRendering: true });
@@ -26,23 +26,43 @@ interface MarkdownViewerProps {
   content?: string;
   title: string;
   isLoading?: boolean;
+  isZenMode?: boolean;
+  onToggleZen?: () => void;
 }
 
-export default function MarkdownViewer({ content, title, isLoading }: MarkdownViewerProps) {
+export default function MarkdownViewer({ content, title, isLoading, isZenMode, onToggleZen }: MarkdownViewerProps) {
   return (
     <div className="flex flex-col h-full bg-slate-950/40 rounded-3xl overflow-hidden relative animate-in zoom-in-95 duration-500">
       {/* Header */}
       <div className="p-4 border-b border-slate-800/60 bg-slate-900/60 flex items-center gap-4 shrink-0 shadow-sm z-10">
-        <div className="flex items-center gap-3 pl-2">
-          <BookOpen className="w-5 h-5 text-emerald-400" />
-          <h2 className="font-bold text-slate-100 text-lg">{title}</h2>
+        <div className="flex items-center gap-3 pl-2 min-w-0">
+          <BookOpen className="w-5 h-5 text-emerald-400 shrink-0" />
+          <h2 className="font-bold text-slate-100 text-base md:text-lg truncate">{title}</h2>
         </div>
-        {isLoading && (
-          <span className="ml-auto flex items-center gap-2 text-xs text-emerald-400 font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-            Generating lesson with Gemini...
-          </span>
-        )}
+        
+        <div className="ml-auto flex items-center gap-4 shrink-0">
+          {isLoading && (
+            <span className="flex items-center gap-2 text-xs text-emerald-400 font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+              Generating lesson...
+            </span>
+          )}
+
+          {onToggleZen && (
+            <button
+              onClick={onToggleZen}
+              className={`hidden lg:flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-xs font-bold transition-all duration-300
+                ${isZenMode 
+                  ? 'bg-emerald-500 border-emerald-400 text-slate-950 shadow-[0_0_12px_rgba(16,185,129,0.3)] hover:bg-emerald-400' 
+                  : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                }`}
+              title={isZenMode ? "Exit Zen Mode" : "Enter Zen Mode"}
+            >
+              {isZenMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-emerald-400" />}
+              <span>{isZenMode ? 'Exit Zen' : 'Zen Mode'}</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Loading skeleton */}

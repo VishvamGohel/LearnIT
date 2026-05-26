@@ -58,6 +58,9 @@ export default function Home() {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeMobileTab, setActiveMobileTab] = useState<'roadmap' | 'lesson' | 'tutor'>('roadmap');
+  const [isZenMode, setIsZenMode] = useState(false);
+  const [isRoadmapDrawerOpen, setIsRoadmapDrawerOpen] = useState(false);
+  const [isTutorDrawerOpen, setIsTutorDrawerOpen] = useState(false);
 
   // Load from local storage on mount
   useEffect(() => {
@@ -274,6 +277,29 @@ export default function Home() {
     setChatHistory(prev => [...prev, sysMsg]);
     // On mobile, auto switch to tutor tab to see the test
     setActiveMobileTab('tutor');
+    // On desktop Zen Mode, auto open the Tutor Drawer so they can see it!
+    if (isZenMode) {
+      setIsTutorDrawerOpen(true);
+    }
+  };
+
+  const handleToggleZenMode = () => {
+    setIsZenMode(prev => {
+      const nextZen = !prev;
+      if (nextZen) {
+        // Automatically collapse sidebars
+        setIsLeftOpen(false);
+        setIsRightOpen(false);
+      } else {
+        // Restore sidebars
+        setIsLeftOpen(true);
+        setIsRightOpen(true);
+      }
+      return nextZen;
+    });
+    // Close any drawers that might be open
+    setIsRoadmapDrawerOpen(false);
+    setIsTutorDrawerOpen(false);
   };
 
   const handleTopicStart = (enteredTopic: string) => {
@@ -327,6 +353,9 @@ export default function Home() {
     setChatHistory([]);
     setTopic('');
     setAppStatus('idle');
+    setIsZenMode(false);
+    setIsRoadmapDrawerOpen(false);
+    setIsTutorDrawerOpen(false);
   };
 
   if (appStatus === 'idle') {
@@ -432,17 +461,17 @@ export default function Home() {
 
   // Render the learning dashboard
   return (
-    <main className="h-screen max-h-screen flex flex-col p-4 md:p-8 gap-6 max-w-[1600px] mx-auto overflow-hidden animate-in fade-in duration-1000">
+    <main className="h-screen max-h-screen flex flex-col p-4 md:p-8 gap-6 max-w-[1600px] mx-auto overflow-hidden animate-in fade-in duration-1000 relative">
       <header className="w-full shrink-0">
         <ProgressDashboard roadmap={roadmap} onReset={handleReset} />
       </header>
 
-      <section className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0 overflow-hidden">
+      <section className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0 overflow-hidden relative">
         {/* Left Sidebar: Roadmap */}
         <div className={`
           ${activeMobileTab === 'roadmap' ? 'flex flex-col flex-1' : 'hidden'}
           lg:flex lg:w-1/4 lg:max-w-xs flex-col min-h-0 glass-panel rounded-3xl p-2 relative overflow-hidden shrink-0 transition-all duration-300 shadow-xl shadow-slate-950/50
-          ${!isLeftOpen ? 'lg:hidden' : ''}
+          ${!isLeftOpen || isZenMode ? 'lg:hidden' : ''}
         `}>
           <button 
             onClick={() => setIsLeftOpen(false)} 
@@ -458,7 +487,7 @@ export default function Home() {
           />
         </div>
 
-        {!isLeftOpen && (
+        {!isLeftOpen && !isZenMode && (
           <div 
             onClick={() => setIsLeftOpen(true)}
             className="hidden lg:flex w-16 flex-col items-center py-6 glass-panel rounded-3xl shrink-0 cursor-pointer hover:bg-slate-800/40 transition-all border border-slate-800/50 shadow-xl"
@@ -474,12 +503,14 @@ export default function Home() {
         {/* Center: Reading Area */}
         <div className={`
           ${activeMobileTab === 'lesson' ? 'flex flex-col flex-1' : 'hidden'}
-          lg:flex lg:flex-1 flex-col min-h-0 glass-panel rounded-3xl p-2 relative overflow-hidden shadow-2xl shadow-slate-950/80
+          lg:flex lg:flex-1 flex-col min-h-0 glass-panel rounded-3xl p-2 relative overflow-hidden shadow-2xl shadow-slate-950/80 transition-all duration-300
         `}>
           <MarkdownViewer 
             title={activeNode?.title || "Welcome"}
             content={activeNode?.learningMaterial || "Select a node from the roadmap to begin your lesson."}
             isLoading={activeNode?.isLoadingLesson === true}
+            isZenMode={isZenMode}
+            onToggleZen={handleToggleZenMode}
           />
         </div>
 
@@ -487,7 +518,7 @@ export default function Home() {
         <div className={`
           ${activeMobileTab === 'tutor' ? 'flex flex-col flex-1' : 'hidden'}
           lg:flex lg:w-1/4 lg:max-w-[400px] flex-col min-h-0 shrink-0 relative transition-all duration-300 shadow-xl shadow-slate-950/50
-          ${!isRightOpen ? 'lg:hidden' : ''}
+          ${!isRightOpen || isZenMode ? 'lg:hidden' : ''}
         `}>
           <button 
             onClick={() => setIsRightOpen(false)} 
@@ -505,7 +536,7 @@ export default function Home() {
           />
         </div>
 
-        {!isRightOpen && (
+        {!isRightOpen && !isZenMode && (
           <div 
             onClick={() => setIsRightOpen(true)}
             className="hidden lg:flex w-16 flex-col items-center py-6 glass-panel rounded-3xl shrink-0 cursor-pointer hover:bg-slate-800/40 transition-all border border-slate-800/50 shadow-xl"
@@ -557,6 +588,94 @@ export default function Home() {
           <span className="text-[10px] uppercase tracking-wider">Tutor</span>
         </button>
       </div>
+
+      {/* Zen Mode Floating Handles (Desktop only) */}
+      {isZenMode && (
+        <>
+          {/* Left Floating Map Handle */}
+          <div className="hidden lg:block fixed left-4 top-1/2 -translate-y-1/2 z-40 animate-in fade-in slide-in-from-left-4 duration-300">
+            <button
+              onClick={() => setIsRoadmapDrawerOpen(true)}
+              className="w-12 h-12 rounded-full bg-slate-900/90 border border-slate-800 text-emerald-400 flex items-center justify-center shadow-lg hover:bg-emerald-500 hover:text-slate-950 transition-all duration-300 hover:scale-105"
+              title="Open Roadmap Drawer"
+            >
+              <Map className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Right Floating Tutor Handle */}
+          <div className="hidden lg:block fixed right-4 top-1/2 -translate-y-1/2 z-40 animate-in fade-in slide-in-from-right-4 duration-300">
+            <button
+              onClick={() => setIsTutorDrawerOpen(true)}
+              className="w-12 h-12 rounded-full bg-slate-900/90 border border-slate-800 text-emerald-400 flex items-center justify-center shadow-lg hover:bg-emerald-500 hover:text-slate-950 transition-all duration-300 hover:scale-105"
+              title="Open Tutor Drawer"
+            >
+              <MessageSquare className="w-5 h-5" />
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Zen Mode Left Roadmap Drawer */}
+      {isZenMode && isRoadmapDrawerOpen && (
+        <>
+          <div 
+            className="hidden lg:block fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-45 animate-in fade-in duration-300"
+            onClick={() => setIsRoadmapDrawerOpen(false)}
+          />
+          <div className="fixed top-4 bottom-4 left-4 w-80 glass-panel rounded-3xl p-4 z-50 flex flex-col min-h-0 shadow-2xl transition-all duration-350 border border-slate-800 animate-in slide-in-from-left-8">
+            <div className="flex justify-between items-center px-2 pb-3 border-b border-slate-900/60 shrink-0">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Roadmap</span>
+              <button 
+                onClick={() => setIsRoadmapDrawerOpen(false)}
+                className="p-1 hover:bg-slate-900 rounded text-slate-400 hover:text-slate-200"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto min-h-0 mt-2">
+              <RoadmapTree 
+                nodes={roadmap?.nodes || []} 
+                activeNodeId={roadmap?.activeNodeId || ''} 
+                onNodeSelect={(node) => {
+                  handleNodeSelect(node);
+                  setIsRoadmapDrawerOpen(false);
+                }}
+              />
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Zen Mode Right Tutor Drawer */}
+      {isZenMode && isTutorDrawerOpen && (
+        <>
+          <div 
+            className="hidden lg:block fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-45 animate-in fade-in duration-300"
+            onClick={() => setIsTutorDrawerOpen(false)}
+          />
+          <div className="fixed top-4 bottom-4 right-4 w-96 glass-panel rounded-3xl z-50 flex flex-col min-h-0 shadow-2xl transition-all duration-350 border border-slate-800 animate-in slide-in-from-right-8">
+            <div className="flex justify-between items-center px-4 py-3 border-b border-slate-900/60 bg-slate-900/40 rounded-t-3xl shrink-0">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Socratic Mentor</span>
+              <button 
+                onClick={() => setIsTutorDrawerOpen(false)}
+                className="p-1 hover:bg-slate-900 rounded text-slate-400 hover:text-slate-200"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex-1 min-h-0">
+              <AITutorChat 
+                activeNode={activeNode}
+                chatHistory={chatHistory}
+                onSendMessage={handleSendMessage}
+                isGenerating={isGenerating}
+                onTriggerCheckpoint={handleTriggerCheckpoint}
+              />
+            </div>
+          </div>
+        </>
+      )}
     </main>
   );
 }
