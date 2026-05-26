@@ -99,25 +99,27 @@ export default function PreAssessment({ topic, onComplete }: PreAssessmentProps)
       <div className="w-full glass-panel border border-slate-800 rounded-3xl overflow-hidden flex flex-col min-h-[450px] shadow-2xl relative">
         
         {/* Header */}
-        <div className="p-6 border-b border-slate-800/60 bg-slate-900/60 flex flex-col gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-              <Sparkles className="w-6 h-6 text-emerald-400" />
-            </div>
-            <div className="flex-1">
-              <h2 className="text-xl font-bold text-slate-100">Curriculum Assessment</h2>
-              <p className="text-sm text-slate-400 mt-1">Customizing your roadmap for <span className="text-emerald-400 font-medium">{topic}</span></p>
+        <div className="p-4 md:p-6 border-b border-slate-800/60 bg-slate-900/60 flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-emerald-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg md:text-xl font-bold text-slate-100 truncate">Curriculum Assessment</h2>
+                <p className="text-xs md:text-sm text-slate-400 mt-0.5 truncate">Customizing your roadmap for <span className="text-emerald-400 font-medium">{topic}</span></p>
+              </div>
             </div>
             
             {/* Step indicator */}
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 md:gap-2 shrink-0 self-start sm:self-auto pl-13 sm:pl-0">
               {STEPS.map((step, idx) => {
                 const isDone = idx < currentStepIndex || isGenerating;
                 const isActive = idx === currentStepIndex && !isGenerating;
                 return (
                   <div key={step.id} className="flex items-center">
                     <div
-                      className={`w-8 h-8 rounded-full border text-xs font-bold flex items-center justify-center transition-all duration-300
+                      className={`w-7 h-7 md:w-8 md:h-8 rounded-full border text-[10px] md:text-xs font-bold flex items-center justify-center transition-all duration-300
                         ${isDone
                           ? 'bg-emerald-500 border-emerald-400 text-slate-950'
                           : isActive
@@ -128,7 +130,7 @@ export default function PreAssessment({ topic, onComplete }: PreAssessmentProps)
                       {idx + 1}
                     </div>
                     {idx < STEPS.length - 1 && (
-                      <div className={`w-4 h-0.5 mx-1 transition-colors duration-300 ${isDone ? 'bg-emerald-500' : 'bg-slate-700'}`} />
+                      <div className={`w-3 md:w-4 h-0.5 mx-0.5 md:mx-1 transition-colors duration-300 ${isDone ? 'bg-emerald-500' : 'bg-slate-700'}`} />
                     )}
                   </div>
                 );

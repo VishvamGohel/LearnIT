@@ -9,7 +9,7 @@ import TopicEntry from '@/components/TopicEntry';
 import PreAssessment from '@/components/PreAssessment';
 import MarkdownViewer from '@/components/MarkdownViewer';
 import { Roadmap, RoadmapNode, ChatMessage, AppStatus } from '@/types';
-import { ChevronLeft, ChevronRight, MessageSquare, Map } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MessageSquare, Map, BookOpen } from 'lucide-react';
 
 // Mock initial data
 const MOCK_ROADMAP: Roadmap = {
@@ -57,6 +57,7 @@ export default function Home() {
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [activeMobileTab, setActiveMobileTab] = useState<'roadmap' | 'lesson' | 'tutor'>('roadmap');
 
   // Load from local storage on mount
   useEffect(() => {
@@ -165,6 +166,8 @@ export default function Home() {
     if (!roadmap) return;
     setRoadmap({ ...roadmap, activeNodeId: node.id });
     setChatHistory([]);
+    // On mobile, auto switch to the lesson tab when a node is clicked
+    setActiveMobileTab('lesson');
     // Only fetch if lesson hasn't been generated yet
     if (!node.learningMaterial && !node.isLoadingLesson) {
       fetchLesson(node, roadmap);
@@ -269,6 +272,8 @@ export default function Home() {
       timestamp: Date.now()
     };
     setChatHistory(prev => [...prev, sysMsg]);
+    // On mobile, auto switch to tutor tab to see the test
+    setActiveMobileTab('tutor');
   };
 
   const handleTopicStart = (enteredTopic: string) => {
@@ -301,6 +306,7 @@ export default function Home() {
         };
         setRoadmap(newRoadmap);
         setAppStatus('learning');
+        setActiveMobileTab('lesson');
         // Kick off lesson generation for the first node immediately
         fetchLesson(firstNode, newRoadmap);
 
@@ -335,8 +341,8 @@ export default function Home() {
     return (
       <main className="h-screen max-h-screen flex flex-col p-4 md:p-8 gap-6 max-w-[1600px] mx-auto overflow-hidden animate-in fade-in duration-700">
         {/* Skeleton Header */}
-        <div className="w-full bg-slate-950/80 border border-slate-900 rounded-3xl p-6 shrink-0">
-          <div className="flex items-center gap-4">
+        <div className="w-full bg-slate-950/80 border border-slate-900 rounded-3xl p-4 md:p-6 shrink-0">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
             <div className="flex flex-col gap-2 flex-1">
               <div className="h-3 w-24 bg-slate-800 rounded-full animate-pulse" />
               <div className="h-6 w-48 bg-slate-800 rounded-full animate-pulse" />
@@ -350,16 +356,16 @@ export default function Home() {
                 <div className="h-full w-0 bg-emerald-500/30 rounded-full" />
               </div>
             </div>
-            <div className="h-16 w-40 bg-slate-900/60 rounded-2xl border border-slate-800 animate-pulse" />
-            <div className="h-16 w-40 bg-slate-900/60 rounded-2xl border border-slate-800 animate-pulse" />
+            <div className="hidden sm:block h-12 w-32 bg-slate-900/60 rounded-2xl border border-slate-800 animate-pulse" />
+            <div className="hidden sm:block h-12 w-32 bg-slate-900/60 rounded-2xl border border-slate-800 animate-pulse" />
           </div>
         </div>
 
-        {/* Skeleton 3-column body */}
+        {/* Skeleton body */}
         <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0 overflow-hidden">
 
           {/* Left — Roadmap skeleton */}
-          <div className="w-full lg:w-1/4 lg:max-w-xs glass-panel rounded-3xl p-6 flex flex-col gap-8 shrink-0">
+          <div className="hidden lg:flex w-full lg:w-1/4 lg:max-w-xs glass-panel rounded-3xl p-6 flex-col gap-8 shrink-0">
             <div className="h-3 w-24 bg-emerald-900/50 rounded-full animate-pulse mx-auto" />
             {[1, 2, 3, 4].map(i => (
               <div key={i} className="flex items-center gap-4 p-4 rounded-2xl border border-slate-800/50 bg-slate-900/30"
@@ -375,7 +381,7 @@ export default function Home() {
           </div>
 
           {/* Center — Lesson content skeleton */}
-          <div className="flex-1 glass-panel rounded-3xl p-8 flex flex-col gap-6 min-h-0 overflow-hidden">
+          <div className="flex-1 glass-panel rounded-3xl p-6 md:p-8 flex flex-col gap-6 min-h-0 overflow-hidden">
             <div className="flex items-center gap-3 pb-4 border-b border-slate-800/60">
               <div className="w-5 h-5 bg-emerald-900/50 rounded animate-pulse" />
               <div className="h-5 w-56 bg-slate-800 rounded-full animate-pulse" />
@@ -401,7 +407,7 @@ export default function Home() {
           </div>
 
           {/* Right — Chat skeleton */}
-          <div className="w-full lg:w-1/4 lg:max-w-[400px] glass-panel rounded-3xl p-6 flex flex-col gap-4 shrink-0 min-h-0">
+          <div className="hidden lg:flex w-full lg:w-1/4 lg:max-w-[400px] glass-panel rounded-3xl p-6 flex-col gap-4 shrink-0 min-h-0">
             <div className="flex items-center gap-3 pb-4 border-b border-slate-800/60">
               <div className="w-9 h-9 rounded-xl bg-emerald-900/40 animate-pulse" />
               <div className="flex flex-col gap-1.5">
@@ -433,22 +439,26 @@ export default function Home() {
 
       <section className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0 overflow-hidden">
         {/* Left Sidebar: Roadmap */}
-        {isLeftOpen ? (
-          <div className="w-full lg:w-1/4 lg:max-w-xs flex flex-col min-h-0 glass-panel rounded-3xl p-2 relative overflow-hidden shrink-0 transition-all duration-300 shadow-xl shadow-slate-950/50">
-            <button 
-              onClick={() => setIsLeftOpen(false)} 
-              className="absolute top-6 right-4 z-50 p-2 bg-slate-900/80 hover:bg-slate-800 rounded-xl text-slate-400 border border-slate-800 backdrop-blur"
-              title="Collapse Roadmap"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <RoadmapTree 
-              nodes={roadmap?.nodes || []} 
-              activeNodeId={roadmap?.activeNodeId || ''} 
-              onNodeSelect={handleNodeSelect} 
-            />
-          </div>
-        ) : (
+        <div className={`
+          ${activeMobileTab === 'roadmap' ? 'flex flex-col flex-1' : 'hidden'}
+          lg:flex lg:w-1/4 lg:max-w-xs flex-col min-h-0 glass-panel rounded-3xl p-2 relative overflow-hidden shrink-0 transition-all duration-300 shadow-xl shadow-slate-950/50
+          ${!isLeftOpen ? 'lg:hidden' : ''}
+        `}>
+          <button 
+            onClick={() => setIsLeftOpen(false)} 
+            className="absolute top-6 right-4 z-50 p-2 bg-slate-900/80 hover:bg-slate-800 rounded-xl text-slate-400 border border-slate-800 backdrop-blur hidden lg:block"
+            title="Collapse Roadmap"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <RoadmapTree 
+            nodes={roadmap?.nodes || []} 
+            activeNodeId={roadmap?.activeNodeId || ''} 
+            onNodeSelect={handleNodeSelect} 
+          />
+        </div>
+
+        {!isLeftOpen && (
           <div 
             onClick={() => setIsLeftOpen(true)}
             className="hidden lg:flex w-16 flex-col items-center py-6 glass-panel rounded-3xl shrink-0 cursor-pointer hover:bg-slate-800/40 transition-all border border-slate-800/50 shadow-xl"
@@ -462,7 +472,10 @@ export default function Home() {
         )}
 
         {/* Center: Reading Area */}
-        <div className="flex-1 flex flex-col min-h-0 glass-panel rounded-3xl p-2 relative overflow-hidden shadow-2xl shadow-slate-950/80">
+        <div className={`
+          ${activeMobileTab === 'lesson' ? 'flex flex-col flex-1' : 'hidden'}
+          lg:flex lg:flex-1 flex-col min-h-0 glass-panel rounded-3xl p-2 relative overflow-hidden shadow-2xl shadow-slate-950/80
+        `}>
           <MarkdownViewer 
             title={activeNode?.title || "Welcome"}
             content={activeNode?.learningMaterial || "Select a node from the roadmap to begin your lesson."}
@@ -471,24 +484,28 @@ export default function Home() {
         </div>
 
         {/* Right Sidebar: AI Tutor */}
-        {isRightOpen ? (
-          <div className="w-full lg:w-1/4 lg:max-w-[400px] min-h-0 shrink-0 relative transition-all duration-300 shadow-xl shadow-slate-950/50">
-            <button 
-              onClick={() => setIsRightOpen(false)} 
-              className="absolute top-2 left-2 z-50 p-2 bg-slate-900/80 hover:bg-slate-800 rounded-xl text-slate-400 border border-slate-800 backdrop-blur"
-              title="Collapse Chat"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-            <AITutorChat 
-              activeNode={activeNode}
-              chatHistory={chatHistory}
-              onSendMessage={handleSendMessage}
-              isGenerating={isGenerating}
-              onTriggerCheckpoint={handleTriggerCheckpoint}
-            />
-          </div>
-        ) : (
+        <div className={`
+          ${activeMobileTab === 'tutor' ? 'flex flex-col flex-1' : 'hidden'}
+          lg:flex lg:w-1/4 lg:max-w-[400px] flex-col min-h-0 shrink-0 relative transition-all duration-300 shadow-xl shadow-slate-950/50
+          ${!isRightOpen ? 'lg:hidden' : ''}
+        `}>
+          <button 
+            onClick={() => setIsRightOpen(false)} 
+            className="absolute top-2 left-2 z-50 p-2 bg-slate-900/80 hover:bg-slate-800 rounded-xl text-slate-400 border border-slate-800 backdrop-blur hidden lg:block"
+            title="Collapse Chat"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+          <AITutorChat 
+            activeNode={activeNode}
+            chatHistory={chatHistory}
+            onSendMessage={handleSendMessage}
+            isGenerating={isGenerating}
+            onTriggerCheckpoint={handleTriggerCheckpoint}
+          />
+        </div>
+
+        {!isRightOpen && (
           <div 
             onClick={() => setIsRightOpen(true)}
             className="hidden lg:flex w-16 flex-col items-center py-6 glass-panel rounded-3xl shrink-0 cursor-pointer hover:bg-slate-800/40 transition-all border border-slate-800/50 shadow-xl"
@@ -501,6 +518,45 @@ export default function Home() {
           </div>
         )}
       </section>
+
+      {/* Mobile Tab Bar */}
+      <div className="lg:hidden shrink-0 w-full bg-slate-950/80 border border-slate-900 rounded-3xl p-2 flex justify-around items-center backdrop-blur-xl shadow-lg">
+        <button
+          onClick={() => setActiveMobileTab('roadmap')}
+          className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl transition-all duration-300 ${
+            activeMobileTab === 'roadmap'
+              ? 'text-emerald-400 bg-slate-900/60 font-semibold'
+              : 'text-slate-500 hover:text-slate-300'
+          }`}
+        >
+          <Map className="w-5 h-5" />
+          <span className="text-[10px] uppercase tracking-wider">Roadmap</span>
+        </button>
+
+        <button
+          onClick={() => setActiveMobileTab('lesson')}
+          className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl transition-all duration-300 ${
+            activeMobileTab === 'lesson'
+              ? 'text-emerald-400 bg-slate-900/60 font-semibold'
+              : 'text-slate-500 hover:text-slate-300'
+          }`}
+        >
+          <BookOpen className="w-5 h-5" />
+          <span className="text-[10px] uppercase tracking-wider">Lesson</span>
+        </button>
+
+        <button
+          onClick={() => setActiveMobileTab('tutor')}
+          className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-2xl transition-all duration-300 ${
+            activeMobileTab === 'tutor'
+              ? 'text-emerald-400 bg-slate-900/60 font-semibold'
+              : 'text-slate-500 hover:text-slate-300'
+          }`}
+        >
+          <MessageSquare className="w-5 h-5" />
+          <span className="text-[10px] uppercase tracking-wider">Tutor</span>
+        </button>
+      </div>
     </main>
   );
 }
