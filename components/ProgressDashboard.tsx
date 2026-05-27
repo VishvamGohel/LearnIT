@@ -2,14 +2,17 @@
 
 import React from 'react';
 import { Roadmap } from '@/types';
-import { Compass, RefreshCw } from 'lucide-react';
+import { Compass, RefreshCw, LogIn, LogOut, User as UserIcon } from 'lucide-react';
 
 interface ProgressDashboardProps {
   roadmap: Roadmap | null;
   onReset: () => void;
+  user: any;
+  onAuthClick: () => void;
+  onLogout: () => void;
 }
 
-export default function ProgressDashboard({ roadmap, onReset }: ProgressDashboardProps) {
+export default function ProgressDashboard({ roadmap, onReset, user, onAuthClick, onLogout }: ProgressDashboardProps) {
   if (!roadmap) return null;
 
   return (
@@ -41,14 +44,40 @@ export default function ProgressDashboard({ roadmap, onReset }: ProgressDashboar
         </div>
       </div>
 
-      {/* Right side: Action Button */}
-      <button 
-        onClick={onReset}
-        className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2 bg-slate-900 hover:bg-slate-800 active:bg-slate-900 text-slate-300 rounded-xl transition-all text-xs font-bold uppercase tracking-wider border border-slate-800 shrink-0 shadow-lg hover:border-slate-700 hover:text-slate-100 self-start sm:self-auto"
-      >
-        <RefreshCw className="w-3 h-3" />
-        <span>New Topic</span>
-      </button>
+      {/* Right side: Action & Auth Buttons */}
+      <div className="flex items-center gap-3 shrink-0 self-start sm:self-auto">
+        <button 
+          onClick={onReset}
+          className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2 bg-slate-900 hover:bg-slate-800 active:bg-slate-900 text-slate-300 rounded-xl transition-all text-xs font-bold uppercase tracking-wider border border-slate-800 shrink-0 shadow-lg hover:border-slate-700 hover:text-slate-100"
+        >
+          <RefreshCw className="w-3 h-3" />
+          <span>New Topic</span>
+        </button>
+
+        {user ? (
+          <div className="flex items-center gap-2 border border-slate-800/80 bg-slate-900/40 pl-3 pr-2 py-1.5 rounded-xl text-slate-300 text-xs font-medium">
+            <UserIcon className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="max-w-[80px] sm:max-w-[125px] truncate">
+              {user.displayName || user.email?.split('@')[0] || 'User'}
+            </span>
+            <button
+              onClick={onLogout}
+              className="p-1 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-slate-300 transition-colors"
+              title="Sign Out"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ) : (
+          <button 
+            onClick={onAuthClick}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl transition-all text-xs font-bold uppercase tracking-wider shrink-0 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+          >
+            <LogIn className="w-3.5 h-3.5" />
+            <span>Sign In</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }

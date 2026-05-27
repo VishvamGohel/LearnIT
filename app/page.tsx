@@ -9,7 +9,11 @@ import TopicEntry from '@/components/TopicEntry';
 import PreAssessment from '@/components/PreAssessment';
 import MarkdownViewer from '@/components/MarkdownViewer';
 import { Roadmap, RoadmapNode, ChatMessage, AppStatus } from '@/types';
-import { ChevronLeft, ChevronRight, MessageSquare, Map, BookOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MessageSquare, Map, BookOpen, LogIn, LogOut, User as UserIcon } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import AuthModal from '@/components/AuthModal';
 
 // Mock initial data
 const MOCK_ROADMAP: Roadmap = {
@@ -62,26 +66,91 @@ export default function Home() {
   const [isRoadmapDrawerOpen, setIsRoadmapDrawerOpen] = useState(false);
   const [isTutorDrawerOpen, setIsTutorDrawerOpen] = useState(false);
 
-  // Load from local storage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem('learnItRoadmap');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setRoadmap(parsed);
-        if (parsed) setAppStatus('learning');
-      } catch (e) {
-        console.error("Failed to parse saved roadmap");
-      }
-    }
-  }, []);
+  const { user, loading, logout } = useAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  // Save to local storage when roadmap changes
+  // Load from local storage or Firestore on mount/auth changes
   useEffect(() => {
+    if (loading) return;
+
+    if (!user) {
+      const saved = localStorage.getItem('learnItRoadmap');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setRoadmap(parsed);
+          if (parsed) setAppStatus('learning');
+        } catch (e) {
+          console.error("Failed to parse saved roadmap");
+        }
+      } else {
+        setRoadmap(null);
+        setAppStatus('idle');
+      }
+      return;
+    }
+
+    const fetchUserRoadmap = async () => {
+      try {
+        const docRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists() && docSnap.data().activeRoadmap) {
+          const activeRoadmap = docSnap.data().activeRoadmap;
+          setRoadmap(activeRoadmap);
+          setAppStatus('learning');
+        } else {
+          // Check if we have a local guest roadmap to migrate!
+          const localSaved = localStorage.getItem('learnItRoadmap');
+          if (localSaved) {
+            const parsed = JSON.parse(localSaved);
+            await setDoc(docRef, { activeRoadmap: parsed }, { merge: true });
+            setRoadmap(parsed);
+            setAppStatus('learning');
+          } else {
+            setRoadmap(null);
+            setAppStatus('idle');
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user roadmap from Firestore:", error);
+      }
+    };
+
+    fetchUserRoadmap();
+  }, [user, loading]);
+
+  // Save/Update/Clear local storage and Firestore when roadmap changes
+  useEffect(() => {
+    if (loading) return;
+    
     if (roadmap) {
       localStorage.setItem('learnItRoadmap', JSON.stringify(roadmap));
+      if (user) {
+        const syncToFirestore = async () => {
+          try {
+            const docRef = doc(db, 'users', user.uid);
+            await setDoc(docRef, { activeRoadmap: roadmap }, { merge: true });
+          } catch (e) {
+            console.error("Error syncing roadmap to Firestore:", e);
+          }
+        };
+        syncToFirestore();
+      }
+    } else {
+      localStorage.removeItem('learnItRoadmap');
+      if (user) {
+        const clearFirestore = async () => {
+          try {
+            const docRef = doc(db, 'users', user.uid);
+            await setDoc(docRef, { activeRoadmap: null }, { merge: true });
+          } catch (e) {
+            console.error("Error clearing roadmap in Firestore:", e);
+          }
+        };
+        clearFirestore();
+      }
     }
-  }, [roadmap]);
+  }, [roadmap, user, loading]);
 
   // Fire confetti celebration when the roadmap is 100% complete
   useEffect(() => {
@@ -359,7 +428,37 @@ export default function Home() {
   };
 
   if (appStatus === 'idle') {
-    return <main className="h-screen"><TopicEntry onStart={handleTopicStart} /></main>;
+    return (
+      <main className="h-screen relative overflow-hidden">
+        {/* Floating Top Right Auth in Idle State */}
+        <div className="absolute top-6 right-6 z-50">
+          {user ? (
+            <div className="flex items-center gap-2.5 border border-slate-800/80 bg-slate-900/60 backdrop-blur-md pl-3 pr-2 py-1.5 rounded-xl text-slate-300 text-xs font-medium shadow-lg animate-in fade-in slide-in-from-top-3 duration-300">
+              <UserIcon className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="max-w-[120px] truncate">{user.displayName || user.email?.split('@')[0]}</span>
+              <button
+                onClick={logout}
+                className="p-1 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-slate-300 transition-colors"
+                title="Sign Out"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={() => setIsAuthModalOpen(true)}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-900/80 border border-slate-800 hover:bg-slate-850 hover:border-slate-700 text-slate-300 hover:text-slate-100 rounded-xl transition-all text-xs font-bold uppercase tracking-wider backdrop-blur-md shadow-lg animate-in fade-in slide-in-from-top-3 duration-300"
+            >
+              <LogIn className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+              <span>Sign In</span>
+            </button>
+          )}
+        </div>
+        <TopicEntry onStart={handleTopicStart} />
+        
+        <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      </main>
+    );
   }
 
   if (appStatus === 'assessing') {
@@ -464,7 +563,13 @@ export default function Home() {
     <main className="h-screen max-h-screen flex flex-col p-4 md:p-8 gap-6 max-w-[1600px] mx-auto overflow-hidden animate-in fade-in duration-1000 relative">
       {!isZenMode && (
         <header className="w-full shrink-0">
-          <ProgressDashboard roadmap={roadmap} onReset={handleReset} />
+          <ProgressDashboard 
+            roadmap={roadmap} 
+            onReset={handleReset} 
+            user={user}
+            onAuthClick={() => setIsAuthModalOpen(true)}
+            onLogout={logout}
+          />
         </header>
       )}
 
@@ -678,6 +783,7 @@ export default function Home() {
           </div>
         </>
       )}
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </main>
   );
 }
