@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { Roadmap } from '@/types';
-import { Compass, RefreshCw, LogIn, LogOut, User as UserIcon } from 'lucide-react';
+import { Compass, Plus, LogIn, LogOut, User as UserIcon } from 'lucide-react';
 
 interface ProgressDashboardProps {
   roadmap: Roadmap | null;
@@ -13,6 +14,7 @@ interface ProgressDashboardProps {
 }
 
 export default function ProgressDashboard({ roadmap, onReset, user, onAuthClick, onLogout }: ProgressDashboardProps) {
+  const router = useRouter();
   if (!roadmap) return null;
 
   return (
@@ -47,10 +49,10 @@ export default function ProgressDashboard({ roadmap, onReset, user, onAuthClick,
       {/* Right side: Action & Auth Buttons */}
       <div className="flex items-center gap-3 shrink-0 self-start sm:self-auto">
         <button 
-          onClick={onReset}
+          onClick={() => router.push('/new')}
           className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2 bg-slate-900 hover:bg-slate-800 active:bg-slate-900 text-slate-300 rounded-xl transition-all text-xs font-bold uppercase tracking-wider border border-slate-800 shrink-0 shadow-lg hover:border-slate-700 hover:text-slate-100"
         >
-          <RefreshCw className="w-3 h-3" />
+          <Plus className="w-3 h-3" />
           <span>New Topic</span>
         </button>
 

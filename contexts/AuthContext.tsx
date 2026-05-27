@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
 export interface AppUser {
@@ -24,6 +25,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     // Get initial session
@@ -68,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: typeof window !== 'undefined' ? `${window.location.origin}` : undefined
+          redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : '/dashboard'
         }
       });
       if (error) throw error;
@@ -85,6 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password: pass,
       });
       if (error) throw error;
+      router.push('/dashboard');
     } catch (error) {
       console.error('Error logging in with Email:', error);
       throw error;
@@ -112,6 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: data.user.email || null,
           displayName: name,
         });
+        router.push('/dashboard');
       }
     } catch (error) {
       console.error('Error signing up with Email:', error);
