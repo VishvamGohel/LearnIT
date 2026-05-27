@@ -11,8 +11,7 @@ import MarkdownViewer from '@/components/MarkdownViewer';
 import { Roadmap, RoadmapNode, ChatMessage, AppStatus } from '@/types';
 import { ChevronLeft, ChevronRight, MessageSquare, Map, BookOpen, LogIn, LogOut, User as UserIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { db } from '@/lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 import AuthModal from '@/components/AuthModal';
 
 // Mock initial data
@@ -69,7 +68,7 @@ export default function Home() {
   const { user, loading, logout } = useAuth();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  // Load from local storage or Firestore on mount/auth changes
+  // Load from local storage or Supabase on mount/auth changes
   useEffect(() => {
     if (loading) return;
 
@@ -92,10 +91,16 @@ export default function Home() {
 
     const fetchUserRoadmap = async () => {
       try {
-        const docRef = doc(db, 'users', user.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists() && docSnap.data().activeRoadmap) {
-          const activeRoadmap = docSnap.data().activeRoadmap;
+        const { data, error } = await supabase
+          .from('roadmaps')
+          .select('roadmap_data')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (data && data.roadmap_data) {
+          const activeRoadmap = data.roadmap_data as unknown as Roadmap;
           setRoadmap(activeRoadmap);
           setAppStatus('learning');
         } else {
@@ -103,7 +108,18 @@ export default function Home() {
           const localSaved = localStorage.getItem('learnItRoadmap');
           if (localSaved) {
             const parsed = JSON.parse(localSaved);
-            await setDoc(docRef, { activeRoadmap: parsed }, { merge: true });
+            const { error: upsertError } = await supabase
+              .from('roadmaps')
+              .upsert({
+                id: parsed.id || `roadmap_${Date.now()}`,
+                user_id: user.id,
+                topic: parsed.topic || '',
+                roadmap_data: parsed,
+                updated_at: new Date().toISOString()
+              });
+            
+            if (upsertError) throw upsertError;
+
             setRoadmap(parsed);
             setAppStatus('learning');
           } else {
@@ -112,42 +128,53 @@ export default function Home() {
           }
         }
       } catch (error) {
-        console.error("Error fetching user roadmap from Firestore:", error);
+        console.error("Error fetching user roadmap from Supabase:", error);
       }
     };
 
     fetchUserRoadmap();
   }, [user, loading]);
 
-  // Save/Update/Clear local storage and Firestore when roadmap changes
+  // Save/Update/Clear local storage and Supabase when roadmap changes
   useEffect(() => {
     if (loading) return;
     
     if (roadmap) {
       localStorage.setItem('learnItRoadmap', JSON.stringify(roadmap));
       if (user) {
-        const syncToFirestore = async () => {
+        const syncToSupabase = async () => {
           try {
-            const docRef = doc(db, 'users', user.uid);
-            await setDoc(docRef, { activeRoadmap: roadmap }, { merge: true });
+            const { error } = await supabase
+              .from('roadmaps')
+              .upsert({
+                id: roadmap.id,
+                user_id: user.id,
+                topic: roadmap.topic,
+                roadmap_data: roadmap,
+                updated_at: new Date().toISOString()
+              });
+            if (error) throw error;
           } catch (e) {
-            console.error("Error syncing roadmap to Firestore:", e);
+            console.error("Error syncing roadmap to Supabase:", e);
           }
         };
-        syncToFirestore();
+        syncToSupabase();
       }
     } else {
       localStorage.removeItem('learnItRoadmap');
       if (user) {
-        const clearFirestore = async () => {
+        const clearSupabase = async () => {
           try {
-            const docRef = doc(db, 'users', user.uid);
-            await setDoc(docRef, { activeRoadmap: null }, { merge: true });
+            const { error } = await supabase
+              .from('roadmaps')
+              .delete()
+              .eq('user_id', user.id);
+            if (error) throw error;
           } catch (e) {
-            console.error("Error clearing roadmap in Firestore:", e);
+            console.error("Error clearing roadmap in Supabase:", e);
           }
         };
-        clearFirestore();
+        clearSupabase();
       }
     }
   }, [roadmap, user, loading]);

@@ -1,10 +1,28 @@
 import { NextResponse } from 'next/server';
 import { groqClient, getGroqModelName } from '@/lib/groq';
 import { RoadmapNode } from '@/types';
+import { z } from 'zod';
+
+const generateRoadmapSchema = z.object({
+  topic: z.string().min(1, "Topic is required").max(100, "Topic must be 100 characters or less"),
+  transcript: z.array(
+    z.object({
+      id: z.string().optional(),
+      role: z.string(),
+      content: z.string(),
+      timestamp: z.number().optional()
+    })
+  )
+});
 
 export async function POST(req: Request) {
   try {
-    const { topic, transcript } = await req.json();
+    const body = await req.json();
+    const parseResult = generateRoadmapSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json({ error: parseResult.error.issues[0]?.message || 'Invalid input' }, { status: 400 });
+    }
+    const { topic, transcript } = parseResult.data;
 
     // Extract user context from the assessment transcript
     const userMessages = transcript.filter((t: any) => t.role === 'user');

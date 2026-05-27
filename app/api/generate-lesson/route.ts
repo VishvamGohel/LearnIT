@@ -1,9 +1,24 @@
 import { NextResponse } from 'next/server';
 import { getGeminiModel } from '@/lib/gemini';
+import { z } from 'zod';
+
+const generateLessonSchema = z.object({
+  nodeTitle: z.string().min(1, "nodeTitle is required"),
+  nodeDescription: z.string().min(1, "nodeDescription is required"),
+  topic: z.string().min(1, "topic is required"),
+  userLevel: z.string().optional(),
+  userGoal: z.string().optional(),
+  userPace: z.string().optional(),
+});
 
 export async function POST(req: Request) {
   try {
-    const { nodeTitle, nodeDescription, topic, userLevel, userGoal, userPace } = await req.json();
+    const body = await req.json();
+    const parseResult = generateLessonSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json({ error: parseResult.error.issues[0]?.message || 'Invalid input' }, { status: 400 });
+    }
+    const { nodeTitle, nodeDescription, topic, userLevel, userGoal, userPace } = parseResult.data;
 
     const prompt = `
 You are a world-class educator and textbook author. Your task is to write an EXTREMELY detailed, 

@@ -1,5 +1,19 @@
 import { NextResponse } from 'next/server';
 import { groqClient, getGroqModelName } from '@/lib/groq';
+import { z } from 'zod';
+
+const tutorSchema = z.object({
+  message: z.string().min(1, "Message is required"),
+  history: z.array(
+    z.object({
+      id: z.string().optional(),
+      role: z.string(),
+      content: z.string(),
+      timestamp: z.number().optional()
+    })
+  ),
+  nodeTitle: z.string().optional()
+});
 
 const SOCRATIC_SYSTEM_PROMPT = `
 You are a highly skilled Socratic mentor. Your job is to guide the user to learn the specific topic from first principles.
@@ -17,7 +31,12 @@ RULES:
 
 export async function POST(req: Request) {
   try {
-    const { message, history, nodeTitle } = await req.json();
+    const body = await req.json();
+    const parseResult = tutorSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json({ error: parseResult.error.issues[0]?.message || 'Invalid input' }, { status: 400 });
+    }
+    const { message, history, nodeTitle } = parseResult.data;
 
     const conversationLog = history.map((msg: any) => {
       const role = msg.role.toUpperCase();
