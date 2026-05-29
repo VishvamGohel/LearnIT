@@ -23,8 +23,8 @@ export default function LearnPage() {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeMobileTab, setActiveMobileTab] = useState<'roadmap' | 'lesson' | 'tutor'>('lesson');
-  const [isLeftOpen, setIsLeftOpen] = useState(true);
-  const [isRightOpen, setIsRightOpen] = useState(true);
+  const [isLeftOpen, setIsLeftOpen] = useState(false);
+  const [isRightOpen, setIsRightOpen] = useState(false);
   const [isZenMode, setIsZenMode] = useState(false);
   const [isRoadmapDrawerOpen, setIsRoadmapDrawerOpen] = useState(false);
   const [isTutorDrawerOpen, setIsTutorDrawerOpen] = useState(false);
@@ -147,6 +147,14 @@ export default function LearnPage() {
       });
     }
   };
+
+  // --- Auto-fetch missing lesson ---
+  useEffect(() => {
+    if (roadmap && activeNode && !activeNode.learningMaterial && !activeNode.isLoadingLesson) {
+      fetchLesson(activeNode, roadmap);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeNode?.id, activeNode?.learningMaterial, activeNode?.isLoadingLesson]);
 
   const handleNodeSelect = (node: RoadmapNode) => {
     if (!roadmap) return;
@@ -301,7 +309,7 @@ export default function LearnPage() {
           <MarkdownViewer
             title={activeNode?.title || 'Welcome'}
             content={activeNode?.learningMaterial || 'Select a node from the roadmap to begin your lesson.'}
-            isLoading={activeNode?.isLoadingLesson === true}
+            isLoading={activeNode ? (!activeNode.learningMaterial || activeNode.isLoadingLesson) : false}
             isZenMode={isZenMode}
             onToggleZen={handleToggleZenMode}
           />

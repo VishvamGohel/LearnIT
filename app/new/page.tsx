@@ -23,30 +23,6 @@ export default function NewTopicPage() {
     }
   }, [user, loading, router]);
 
-  const fetchLesson = async (node: RoadmapNode, currentRoadmap: Roadmap) => {
-    try {
-      const res = await fetch('/api/generate-lesson', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nodeTitle: node.title,
-          nodeDescription: node.description,
-          topic: currentRoadmap.topic,
-          userLevel: currentRoadmap.userLevel || 'beginner',
-          userGoal: currentRoadmap.userGoal || 'general understanding',
-          userPace: currentRoadmap.userPace || 'standard pace',
-        })
-      });
-      const data = await res.json();
-      if (res.ok && data.content) {
-        return data.content as string;
-      }
-    } catch (e) {
-      console.error('Failed to pre-fetch first lesson:', e);
-    }
-    return undefined;
-  };
-
   const handleTopicStart = (enteredTopic: string) => {
     setTopic(enteredTopic);
     setStatus('assessing');
@@ -78,23 +54,8 @@ export default function NewTopicPage() {
           userPace: data.userPace,
         };
 
-        // Pre-fetch first lesson while saving
-        const [firstLessonContent] = await Promise.all([
-          fetchLesson(firstNode, newRoadmap),
-        ]);
-
-        // Inject first lesson content into nodes if available
-        const roadmapToSave: Roadmap = firstLessonContent
-          ? {
-              ...newRoadmap,
-              nodes: newRoadmap.nodes.map(n =>
-                n.id === firstNode.id ? { ...n, learningMaterial: firstLessonContent } : n
-              )
-            }
-          : newRoadmap;
-
         // Save to Supabase (if logged in) + localStorage
-        localStorage.setItem('learnItRoadmap', JSON.stringify(roadmapToSave));
+        localStorage.setItem('learnItRoadmap', JSON.stringify(newRoadmap));
 
         if (user) {
           try {
@@ -104,7 +65,7 @@ export default function NewTopicPage() {
                 id: roadmapId,
                 user_id: user.id,
                 topic,
-                roadmap_data: roadmapToSave,
+                roadmap_data: newRoadmap,
                 updated_at: new Date().toISOString(),
               });
             if (error) throw error;
