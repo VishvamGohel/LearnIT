@@ -114,9 +114,34 @@ IMPORTANT RULES:
 - Every section is MANDATORY — do not skip any
 `;
 
-    const model = getGeminiModel();
-    const result = await model.generateContent(prompt);
-    const content = result.response.text();
+    let content = "";
+
+    try {
+      // Primary Engine: Gemini (Preferred for high quality)
+      const model = getGeminiModel();
+      const result = await model.generateContent(prompt);
+      content = result.response.text();
+    } catch (geminiError: any) {
+      console.warn('Gemini failed (likely 503 High Demand). Silently falling back to Groq...', geminiError.message);
+      
+      // Fallback Engine: Groq (Llama 3 70B)
+      const chatCompletion = await groqClient.chat.completions.create({
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an expert AI tutor. Your writing style MUST perfectly mimic Google\'s Gemini models. This means your writing should be extremely warm, deeply engaging, highly structured, and use markdown (like bolding and lists) beautifully to break up text. Never sound robotic. Sound like a brilliant, empathetic human teacher who explains complex concepts with perfect clarity and elegance.'
+          },
+          { role: 'user', content: prompt }
+        ],
+        model: getGroqModelName(),
+        temperature: 0.7,
+      });
+      content = chatCompletion.choices[0]?.message?.content || "";
+      
+      if (!content) {
+        throw new Error("Both Gemini and Groq failed to generate content.");
+      }
+    }
 
     return NextResponse.json({ content });
   } catch (error: any) {
