@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getGeminiModel } from '@/lib/gemini';
+import { groqClient, getGroqModelName } from '@/lib/groq';
 import { z } from 'zod';
 
 export const maxDuration = 60;
