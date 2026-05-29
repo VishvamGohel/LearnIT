@@ -3,6 +3,8 @@ import { groqClient, getGroqModelName } from '@/lib/groq';
 import { RoadmapNode } from '@/types';
 import { z } from 'zod';
 
+export const maxDuration = 60;
+
 const generateRoadmapSchema = z.object({
   topic: z.string().min(1, "Topic is required").max(100, "Topic must be 100 characters or less"),
   transcript: z.array(

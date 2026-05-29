@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getGeminiModel } from '@/lib/gemini';
 import { z } from 'zod';
 
+export const maxDuration = 60;
+
 const generateLessonSchema = z.object({
   nodeTitle: z.string().min(1, "nodeTitle is required"),
   nodeDescription: z.string().min(1, "nodeDescription is required"),

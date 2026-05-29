@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { groqClient, getGroqModelName } from '@/lib/groq';
 import { z } from 'zod';
 
+export const maxDuration = 60;
+
 const tutorSchema = z.object({
   message: z.string().min(1, "Message is required"),
   history: z.array(
