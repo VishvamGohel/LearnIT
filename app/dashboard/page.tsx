@@ -221,16 +221,9 @@ export default function DashboardPage() {
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">New Topic</span>
           </button>
-          <div className="flex items-center gap-2 glass-panel border border-slate-800/80 pl-3 pr-2 py-1.5 rounded-xl">
+          <div className="flex items-center gap-2 glass-panel border border-slate-800/80 pl-3 pr-2 py-1.5 rounded-xl cursor-pointer hover:border-emerald-500/40 transition-colors group" onClick={() => router.push('/settings')}>
             <UserIcon className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-            <span className="text-xs text-slate-300 font-medium max-w-[100px] truncate">{displayName}</span>
-            <button
-              onClick={handleLogout}
-              title="Sign Out"
-              className="p-1 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-slate-300 transition-colors ml-1"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-            </button>
+            <span className="text-xs text-slate-300 font-medium max-w-[100px] truncate group-hover:text-slate-200 transition-colors">{displayName}</span>
           </div>
         </div>
       </header>
