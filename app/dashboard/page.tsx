@@ -313,6 +313,11 @@ export default function DashboardPage() {
       </section>
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+
+      {/* Footer / Trademark */}
+      <footer className="mt-8 text-center text-xs text-slate-600/50 py-4 font-medium tracking-wide">
+        Made by Vishvam Gohel
+      </footer>
     </main>
   );
 }

@@ -124,7 +124,7 @@ export default function AITutorChat({
           <div className="flex justify-start">
             <div className="bg-emerald-950/10 border border-emerald-500/5 text-slate-400 rounded-2xl rounded-tl-none px-4 py-3 text-sm flex items-center gap-2">
               <Loader className="w-4 h-4 animate-spin text-emerald-400" />
-              <span>Formulating question...</span>
+              <span>Analyzing...</span>
             </div>
           </div>
         )}
