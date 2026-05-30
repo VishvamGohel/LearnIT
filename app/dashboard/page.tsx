@@ -10,6 +10,7 @@ import {
   ChevronRight, Sparkles, Trash2, MoreVertical, Play, CheckCircle2
 } from 'lucide-react';
 import AuthModal from '@/components/AuthModal';
+import WelcomeTutorialModal from '@/components/WelcomeTutorialModal';
 
 interface RoadmapRow {
   id: string;
@@ -133,6 +134,22 @@ export default function DashboardPage() {
   const [fetching, setFetching] = useState(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  useEffect(() => {
+    // Check if user is first-time
+    const hasSeenTutorial = localStorage.getItem('learnit_has_seen_tutorial');
+    if (!hasSeenTutorial) {
+      // Small delay for smooth entry after dashboard loads
+      const timer = setTimeout(() => setShowTutorial(true), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const handleCloseTutorial = () => {
+    localStorage.setItem('learnit_has_seen_tutorial', 'true');
+    setShowTutorial(false);
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -313,6 +330,7 @@ export default function DashboardPage() {
       </section>
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      <WelcomeTutorialModal isOpen={showTutorial} onClose={handleCloseTutorial} />
 
       {/* Footer / Trademark */}
       <footer className="mt-8 text-center text-xs text-slate-600/50 py-4 font-medium tracking-wide">
