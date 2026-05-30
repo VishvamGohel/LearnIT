@@ -85,15 +85,15 @@ export default function WelcomeTutorialModal({ isOpen, onClose }: WelcomeTutoria
     {
       title: "Socratic Mentorship",
       description: "We don't just give you the answers. To progress, you must pass Checkpoints. Our AI Tutor uses the Socratic method to guide you.",
-      color: "from-amber-400 to-orange-500",
+      color: "from-emerald-400 to-teal-400",
       renderVisual: () => (
         <div className="w-full h-32 flex justify-center items-center">
           {/* Mini Chat Interface */}
           <div className="w-full max-w-[240px] flex flex-col gap-2">
             {/* Tutor message */}
             <div className="flex gap-2 items-start w-5/6">
-              <div className="w-5 h-5 rounded-md bg-amber-500/20 border border-amber-500/30 flex items-center justify-center shrink-0">
-                <GraduationCap className="w-3 h-3 text-amber-400" />
+              <div className="w-5 h-5 rounded-md bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                <GraduationCap className="w-3 h-3 text-emerald-400" />
               </div>
               <div className="bg-slate-900 border border-slate-800 rounded-xl rounded-tl-none p-2 w-full">
                 <div className="w-full h-1 bg-slate-700 rounded-full mb-1" />
@@ -102,14 +102,14 @@ export default function WelcomeTutorialModal({ isOpen, onClose }: WelcomeTutoria
             </div>
             {/* User message */}
             <div className="flex gap-2 items-start justify-end w-full">
-              <div className="bg-amber-600/90 rounded-xl rounded-tr-none p-2 w-3/5 shadow-md">
-                <div className="w-full h-1 bg-amber-950/40 rounded-full mb-1" />
-                <div className="w-2/3 h-1 bg-amber-950/40 rounded-full" />
+              <div className="bg-emerald-600/90 rounded-xl rounded-tr-none p-2 w-3/5 shadow-md">
+                <div className="w-full h-1 bg-emerald-950/40 rounded-full mb-1" />
+                <div className="w-2/3 h-1 bg-emerald-950/40 rounded-full" />
               </div>
             </div>
             {/* Take Checkpoint button */}
-            <div className="mt-1 w-full bg-slate-900/80 border border-amber-500/30 rounded-lg py-1.5 flex justify-center items-center shadow-[0_0_10px_rgba(245,158,11,0.1)]">
-              <span className="text-[9px] font-bold text-amber-400 flex items-center gap-1">
+            <div className="mt-1 w-full bg-slate-900/80 border border-emerald-500/30 rounded-lg py-1.5 flex justify-center items-center shadow-[0_0_10px_rgba(16,185,129,0.1)]">
+              <span className="text-[9px] font-bold text-emerald-400 flex items-center gap-1">
                 <Sparkles className="w-2.5 h-2.5" /> Take Checkpoint
               </span>
             </div>
