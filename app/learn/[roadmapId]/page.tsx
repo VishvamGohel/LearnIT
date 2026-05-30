@@ -312,6 +312,13 @@ export default function LearnPage() {
             isLoading={activeNode ? (!activeNode.learningMaterial || activeNode.isLoadingLesson) : false}
             isZenMode={isZenMode}
             onToggleZen={handleToggleZenMode}
+            onTriggerCheckpoint={handleTriggerCheckpoint}
+            isCompleted={activeNode?.status === 'completed'}
+            hasNextNode={!!roadmap?.nodes.find(n => activeNode && n.order === activeNode.order + 1)}
+            onNextNode={() => {
+              const next = roadmap?.nodes.find(n => activeNode && n.order === activeNode.order + 1);
+              if (next) handleNodeSelect(next);
+            }}
           />
         </div>
 

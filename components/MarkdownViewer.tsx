@@ -28,9 +28,23 @@ interface MarkdownViewerProps {
   isLoading?: boolean;
   isZenMode?: boolean;
   onToggleZen?: () => void;
+  onTriggerCheckpoint?: () => void;
+  isCompleted?: boolean;
+  hasNextNode?: boolean;
+  onNextNode?: () => void;
 }
 
-export default function MarkdownViewer({ content, title, isLoading, isZenMode, onToggleZen }: MarkdownViewerProps) {
+export default function MarkdownViewer({ 
+  content, 
+  title, 
+  isLoading, 
+  isZenMode, 
+  onToggleZen,
+  onTriggerCheckpoint,
+  isCompleted,
+  hasNextNode,
+  onNextNode
+}: MarkdownViewerProps) {
   return (
     <div className="flex flex-col h-full bg-slate-950/40 rounded-3xl overflow-hidden relative animate-in zoom-in-95 duration-500">
       {/* Header */}
@@ -131,6 +145,40 @@ export default function MarkdownViewer({ content, title, isLoading, isZenMode, o
                   .replace(/^[ \t]+/gm, '')
               }
             </ReactMarkdown>
+
+            {/* Bottom CTA to guide the user to the next step */}
+            {content && (
+              <div className="mt-16 pt-8 border-t border-slate-800/60 flex flex-col items-center justify-center text-center pb-8">
+                {!isCompleted ? (
+                  <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-8 max-w-md w-full shadow-2xl">
+                    <h3 className="text-xl font-bold text-slate-100 mb-2">Ready to move on?</h3>
+                    <p className="text-sm text-slate-400 mb-6">Test your knowledge to unlock the next lesson.</p>
+                    <button
+                      onClick={onTriggerCheckpoint}
+                      className="w-full py-3.5 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm transition-all duration-300 shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-1"
+                    >
+                      Take Checkpoint
+                    </button>
+                  </div>
+                ) : hasNextNode ? (
+                  <div className="bg-emerald-950/20 border border-emerald-900/40 rounded-3xl p-8 max-w-md w-full shadow-2xl">
+                    <h3 className="text-xl font-bold text-emerald-400 mb-2">Checkpoint Passed! 🎉</h3>
+                    <p className="text-sm text-slate-400 mb-6">Great job. You are ready for the next lesson.</p>
+                    <button
+                      onClick={onNextNode}
+                      className="w-full py-3.5 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm transition-all duration-300 shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-1"
+                    >
+                      Continue to Next Lesson →
+                    </button>
+                  </div>
+                ) : (
+                  <div className="bg-teal-950/20 border border-teal-900/40 rounded-3xl p-8 max-w-md w-full shadow-2xl">
+                    <h3 className="text-2xl font-black text-teal-400 mb-2">Roadmap Complete! 🏆</h3>
+                    <p className="text-sm text-slate-400">You've successfully finished every lesson in this topic.</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
