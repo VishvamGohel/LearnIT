@@ -224,6 +224,7 @@ export default function LearnPage() {
     const sysMsg: ChatMessage = { id: Date.now().toString(), role: 'system', content: `Checkpoint Challenge: ${activeNode.checkpointQuestion}`, timestamp: Date.now() };
     setChatHistory(prev => [...prev, sysMsg]);
     setActiveMobileTab('tutor');
+    setIsRightOpen(true);
     if (isZenMode) setIsTutorDrawerOpen(true);
   };
 
