@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Map, Eye, GraduationCap, ChevronRight, ChevronLeft, Sparkles, X } from 'lucide-react';
+import { Map, Eye, GraduationCap, ChevronRight, ChevronLeft, Sparkles, X, Check, MessageSquare } from 'lucide-react';
 
 interface WelcomeTutorialModalProps {
   isOpen: boolean;
@@ -27,31 +27,95 @@ export default function WelcomeTutorialModal({ isOpen, onClose }: WelcomeTutoria
 
   const slides = [
     {
-      icon: Map,
       title: "The Journey Begins",
-      description: "Enter any topic—from Quantum Physics to Ancient History—and LearnIT will instantly generate a completely custom, structured learning roadmap tailored exactly to your pace and goals.",
+      description: "Enter any topic—from Quantum Physics to Ancient History—and LearnIT instantly generates a structured learning roadmap tailored to your pace.",
       color: "from-emerald-400 to-teal-500",
-      bgLight: "bg-emerald-500/10",
-      borderLight: "border-emerald-500/20",
-      iconColor: "text-emerald-400"
+      renderVisual: () => (
+        <div className="w-full h-32 flex justify-center items-center relative">
+          {/* Mini Roadmap Timeline */}
+          <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-0.5 bg-slate-800/80" />
+          
+          <div className="flex flex-col gap-5 relative z-10 w-full max-w-[200px]">
+            {/* Node 1: Completed */}
+            <div className="flex items-center gap-3 w-full">
+              <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.5)] z-10 shrink-0">
+                <Check className="w-3.5 h-3.5 text-slate-950" />
+              </div>
+              <div className="h-2 w-full bg-slate-800 rounded-full" />
+            </div>
+            {/* Node 2: Active */}
+            <div className="flex items-center gap-3 w-full opacity-90">
+              <div className="w-6 h-6 rounded-full bg-slate-900 border-2 border-emerald-400 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.3)] z-10 shrink-0 relative">
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              </div>
+              <div className="h-2 w-3/4 bg-slate-800 rounded-full" />
+            </div>
+            {/* Node 3: Locked */}
+            <div className="flex items-center gap-3 w-full opacity-40">
+              <div className="w-6 h-6 rounded-full bg-slate-900 border-2 border-slate-700 flex items-center justify-center z-10 shrink-0" />
+              <div className="h-2 w-1/2 bg-slate-800 rounded-full" />
+            </div>
+          </div>
+        </div>
+      )
     },
     {
-      icon: Eye,
       title: "Deep Focus",
-      description: "Dive into comprehensive lessons generated on-the-fly. Enter Zen Mode to hide all distractions and immerse yourself completely in your learning material.",
+      description: "Dive into comprehensive lessons generated on-the-fly. Enter Zen Mode to hide all distractions and immerse yourself completely.",
       color: "from-indigo-400 to-purple-500",
-      bgLight: "bg-indigo-500/10",
-      borderLight: "border-indigo-500/20",
-      iconColor: "text-indigo-400"
+      renderVisual: () => (
+        <div className="w-full h-32 flex justify-center items-center">
+          {/* Mini Reading Pane */}
+          <div className="w-full max-w-[240px] h-28 bg-slate-900/60 border border-slate-800 rounded-xl p-3 flex flex-col shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-2">
+              <div className="px-2 py-1 bg-indigo-500/20 border border-indigo-500/30 rounded-lg flex items-center gap-1">
+                <Eye className="w-2.5 h-2.5 text-indigo-400" />
+                <span className="text-[8px] font-bold text-indigo-400">Zen Mode</span>
+              </div>
+            </div>
+            <div className="w-1/2 h-3 bg-slate-700 rounded-full mb-3 mt-1" />
+            <div className="w-full h-1.5 bg-slate-800 rounded-full mb-2" />
+            <div className="w-5/6 h-1.5 bg-slate-800 rounded-full mb-2" />
+            <div className="w-full h-1.5 bg-slate-800 rounded-full mb-2" />
+            <div className="w-4/6 h-1.5 bg-slate-800 rounded-full" />
+          </div>
+        </div>
+      )
     },
     {
-      icon: GraduationCap,
       title: "Socratic Mentorship",
-      description: "We don't just give you the answers. To progress through a roadmap, you must pass checkpoint challenges. Our AI Tutor uses the Socratic method to guide you to the answer yourself.",
+      description: "We don't just give you the answers. To progress, you must pass Checkpoints. Our AI Tutor uses the Socratic method to guide you.",
       color: "from-amber-400 to-orange-500",
-      bgLight: "bg-amber-500/10",
-      borderLight: "border-amber-500/20",
-      iconColor: "text-amber-400"
+      renderVisual: () => (
+        <div className="w-full h-32 flex justify-center items-center">
+          {/* Mini Chat Interface */}
+          <div className="w-full max-w-[240px] flex flex-col gap-2">
+            {/* Tutor message */}
+            <div className="flex gap-2 items-start w-5/6">
+              <div className="w-5 h-5 rounded-md bg-amber-500/20 border border-amber-500/30 flex items-center justify-center shrink-0">
+                <GraduationCap className="w-3 h-3 text-amber-400" />
+              </div>
+              <div className="bg-slate-900 border border-slate-800 rounded-xl rounded-tl-none p-2 w-full">
+                <div className="w-full h-1 bg-slate-700 rounded-full mb-1" />
+                <div className="w-4/5 h-1 bg-slate-700 rounded-full" />
+              </div>
+            </div>
+            {/* User message */}
+            <div className="flex gap-2 items-start justify-end w-full">
+              <div className="bg-amber-600/90 rounded-xl rounded-tr-none p-2 w-3/5 shadow-md">
+                <div className="w-full h-1 bg-amber-950/40 rounded-full mb-1" />
+                <div className="w-2/3 h-1 bg-amber-950/40 rounded-full" />
+              </div>
+            </div>
+            {/* Take Checkpoint button */}
+            <div className="mt-1 w-full bg-slate-900/80 border border-amber-500/30 rounded-lg py-1.5 flex justify-center items-center shadow-[0_0_10px_rgba(245,158,11,0.1)]">
+              <span className="text-[9px] font-bold text-amber-400 flex items-center gap-1">
+                <Sparkles className="w-2.5 h-2.5" /> Take Checkpoint
+              </span>
+            </div>
+          </div>
+        </div>
+      )
     }
   ];
 
@@ -70,7 +134,6 @@ export default function WelcomeTutorialModal({ isOpen, onClose }: WelcomeTutoria
   };
 
   const slide = slides[currentSlide];
-  const Icon = slide.icon;
 
   return (
     <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 transition-all duration-500 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
@@ -98,17 +161,12 @@ export default function WelcomeTutorialModal({ isOpen, onClose }: WelcomeTutoria
         {/* Content area */}
         <div className="px-8 pt-12 pb-8 flex flex-col items-center text-center relative z-10 min-h-[360px] justify-center">
           
-          <div className={`w-20 h-20 rounded-3xl ${slide.bgLight} border ${slide.borderLight} flex items-center justify-center mb-8 shadow-xl transition-colors duration-500 relative`}>
-            <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${slide.color} opacity-20 blur-xl`} />
-            <Icon className={`w-10 h-10 ${slide.iconColor} relative z-10`} />
-            
-            {/* Sparkle for first slide */}
-            {currentSlide === 0 && (
-              <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-emerald-400 animate-pulse" />
-            )}
+          {/* Dynamic Visual Mockup */}
+          <div className="w-full flex items-center justify-center mb-6">
+            {slide.renderVisual()}
           </div>
           
-          <div className="space-y-4">
+          <div className="space-y-3">
             <h2 className={`text-2xl sm:text-3xl font-black bg-clip-text text-transparent bg-gradient-to-br ${slide.color} transition-all duration-500`}>
               {slide.title}
             </h2>
