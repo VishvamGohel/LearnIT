@@ -7,6 +7,7 @@ import RoadmapTree from '@/components/RoadmapTree';
 import AITutorChat from '@/components/AITutorChat';
 import ProgressDashboard from '@/components/ProgressDashboard';
 import MarkdownViewer from '@/components/MarkdownViewer';
+import QuizModal from '@/components/QuizModal';
 import { Roadmap, RoadmapNode, ChatMessage } from '@/types';
 import { ChevronLeft, ChevronRight, MessageSquare, Map, BookOpen, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,6 +30,7 @@ export default function LearnPage() {
   const [isRoadmapDrawerOpen, setIsRoadmapDrawerOpen] = useState(false);
   const [isTutorDrawerOpen, setIsTutorDrawerOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
 
   // --- Data Loading ---
   useEffect(() => {
@@ -134,7 +136,15 @@ export default function LearnPage() {
       if (res.ok && data.content) {
         setRoadmap(prev => {
           if (!prev) return prev;
-          const updated = { ...prev, nodes: prev.nodes.map(n => n.id === node.id ? { ...n, learningMaterial: data.content, isLoadingLesson: false } : n) };
+          const updated = { 
+            ...prev, 
+            nodes: prev.nodes.map(n => n.id === node.id ? { 
+              ...n, 
+              learningMaterial: data.content, 
+              quiz: data.quiz,
+              isLoadingLesson: false 
+            } : n) 
+          };
           syncRoadmap(updated);
           return updated;
         });
@@ -168,6 +178,66 @@ export default function LearnPage() {
     }
   };
 
+  const passCheckpoint = () => {
+    if (!activeNode) return;
+    setRoadmap(prev => {
+      if (!prev) return null;
+      const newNodes = [...prev.nodes];
+      const idx = newNodes.findIndex(n => n.id === activeNode.id);
+      if (idx !== -1) newNodes[idx] = { ...newNodes[idx], status: 'completed' };
+      let nextId = prev.activeNodeId;
+      if (idx + 1 < newNodes.length) {
+        newNodes[idx + 1] = { ...newNodes[idx + 1], status: 'in-progress' };
+        nextId = newNodes[idx + 1].id;
+      }
+      const completedCount = newNodes.filter(n => n.status === 'completed').length;
+      const newPercentage = Math.round((completedCount / newNodes.length) * 100);
+      const updated = { ...prev, nodes: newNodes, progressPercentage: newPercentage, activeNodeId: nextId };
+      syncRoadmap(updated);
+      return updated;
+    });
+  };
+
+  const handleQuizFail = (failedQuestions: any[]) => {
+    if (!activeNode) return;
+    
+    setRoadmap(prev => {
+      if (!prev) return prev;
+      const updatedNodes = prev.nodes.map(n => n.id === activeNode.id ? { ...n, hasFailedQuiz: true, failedQuestions } : n);
+      const updated = { ...prev, nodes: updatedNodes };
+      syncRoadmap(updated);
+      return updated;
+    });
+
+    setActiveMobileTab('tutor');
+    setIsRightOpen(true);
+    if (isZenMode) setIsTutorDrawerOpen(true);
+
+    // Trigger AI response automatically with failed context
+    setIsGenerating(true);
+    fetch('/api/tutor', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        message: "", 
+        history: chatHistory, 
+        nodeTitle: activeNode.title,
+        failedContext: failedQuestions 
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.reply) {
+        const aiMsg: ChatMessage = { id: (Date.now() + 1).toString(), role: 'model', content: data.reply, timestamp: Date.now() };
+        setChatHistory(prev => [...prev, aiMsg]);
+      }
+    })
+    .catch(error => {
+      console.error("AI Tutor Error:", error);
+    })
+    .finally(() => setIsGenerating(false));
+  };
+
   const handleSendMessage = async (message: string) => {
     const userMsg: ChatMessage = { id: Date.now().toString(), role: 'user', content: message, timestamp: Date.now() };
     setChatHistory(prev => [...prev, userMsg]);
@@ -177,7 +247,12 @@ export default function LearnPage() {
       const response = await fetch('/api/tutor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, history: chatHistory, nodeTitle: activeNode?.title })
+        body: JSON.stringify({ 
+          message, 
+          history: chatHistory, 
+          nodeTitle: activeNode?.title,
+          failedContext: activeNode?.failedQuestions 
+        })
       });
       const data = await response.json();
 
@@ -193,22 +268,7 @@ export default function LearnPage() {
         setChatHistory(prev => [...prev, aiMsg]);
 
         if (isPassed && activeNode) {
-          setRoadmap(prev => {
-            if (!prev) return null;
-            const newNodes = [...prev.nodes];
-            const idx = newNodes.findIndex(n => n.id === activeNode.id);
-            if (idx !== -1) newNodes[idx] = { ...newNodes[idx], status: 'completed' };
-            let nextId = prev.activeNodeId;
-            if (idx + 1 < newNodes.length) {
-              newNodes[idx + 1] = { ...newNodes[idx + 1], status: 'in-progress' };
-              nextId = newNodes[idx + 1].id;
-            }
-            const completedCount = newNodes.filter(n => n.status === 'completed').length;
-            const newPercentage = Math.round((completedCount / newNodes.length) * 100);
-            const updated = { ...prev, nodes: newNodes, progressPercentage: newPercentage, activeNodeId: nextId };
-            syncRoadmap(updated);
-            return updated;
-          });
+          passCheckpoint();
         }
       } else throw new Error(data.error || 'Failed to fetch AI response');
     } catch (error: any) {
@@ -254,7 +314,12 @@ export default function LearnPage() {
   }
 
   return (
-    <main className="h-screen max-h-screen flex flex-col p-4 md:p-8 gap-6 max-w-[1600px] mx-auto overflow-hidden animate-in fade-in duration-1000 relative">
+    <div className="relative h-screen overflow-hidden">
+      {/* ── Entire page content — blurs when quiz is open ── */}
+      <main
+        className="h-screen max-h-screen flex flex-col p-4 md:p-8 gap-6 max-w-[1600px] mx-auto overflow-hidden animate-in fade-in duration-1000 relative transition-[filter] duration-300"
+        style={{ filter: isQuizModalOpen ? 'blur(5px) brightness(0.6)' : 'none' }}
+      >
       {/* Back to Dashboard button (visible when not in zen mode) */}
       {!isZenMode && (
         <header className="w-full shrink-0 flex flex-col gap-2">
@@ -315,11 +380,14 @@ export default function LearnPage() {
             onToggleZen={handleToggleZenMode}
             onTriggerCheckpoint={handleTriggerCheckpoint}
             isCompleted={activeNode?.status === 'completed'}
+            hasFailedQuiz={activeNode?.hasFailedQuiz}
             hasNextNode={!!roadmap?.nodes.find(n => activeNode && n.order === activeNode.order + 1)}
             onNextNode={() => {
               const next = roadmap?.nodes.find(n => activeNode && n.order === activeNode.order + 1);
               if (next) handleNodeSelect(next);
             }}
+            quiz={activeNode?.quiz}
+            onOpenQuiz={() => setIsQuizModalOpen(true)}
           />
         </div>
 
@@ -433,5 +501,21 @@ export default function LearnPage() {
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </main>
+
+      {/* ── Quiz Modal — lives OUTSIDE main so blur doesn't affect it ── */}
+      <QuizModal
+        isOpen={isQuizModalOpen}
+        onClose={() => setIsQuizModalOpen(false)}
+        quiz={activeNode?.quiz || []}
+        onPass={() => {
+          setIsQuizModalOpen(false);
+          passCheckpoint();
+        }}
+        onFail={(failedQuestions) => {
+          setIsQuizModalOpen(false);
+          handleQuizFail(failedQuestions);
+        }}
+      />
+    </div>
   );
 }

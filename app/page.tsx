@@ -103,6 +103,7 @@ export default function LandingPage() {
             <Sparkles className="w-4 h-4 text-slate-950" />
           </div>
           <span className="text-base font-bold text-slate-100 tracking-tight">LearnIT</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded ml-2">Beta</span>
         </div>
         <button
           id="nav-signin-btn"

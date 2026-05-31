@@ -1,5 +1,12 @@
 export type AppStatus = 'idle' | 'assessing' | 'generating' | 'learning';
 
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  correctAnswerIndex: number;
+  explanation: string;
+}
+
 export interface RoadmapNode {
   id: string;
   title: string;
@@ -8,6 +15,9 @@ export interface RoadmapNode {
   order: number;
   learningMaterial?: string; // Markdown content — generated lazily on node click
   isLoadingLesson?: boolean; // True while Gemini is generating the lesson
+  quiz?: QuizQuestion[];
+  hasFailedQuiz?: boolean; // True if the user failed the quiz and needs AI pass
+  failedQuestions?: QuizQuestion[]; // The specific questions the user failed
   checkpointQuestion: string;
   checkpointOptions?: string[]; // Multiple choice fallback
   checkpointAnswer: string;

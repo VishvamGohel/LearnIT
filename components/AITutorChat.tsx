@@ -70,7 +70,7 @@ export default function AITutorChat({
 
       {/* Main Chat Display */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-emerald-500/10">
-        {chatHistory.length === 0 ? (
+        {chatHistory.filter(msg => msg.role !== 'system').length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-8 max-w-sm mx-auto">
             <GraduationCap className="w-12 h-12 text-slate-700 mb-4" />
             <p className="text-sm font-medium text-slate-300">
@@ -80,7 +80,7 @@ export default function AITutorChat({
             </p>
           </div>
         ) : (
-          chatHistory.map((msg) => (
+          chatHistory.filter(msg => msg.role !== 'system').map((msg) => (
             <div 
               key={msg.id} 
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}

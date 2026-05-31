@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { BookOpen, Eye, EyeOff } from 'lucide-react';
 import mermaid from 'mermaid';
+import { QuizQuestion } from '@/types';
 
 mermaid.initialize({ startOnLoad: false, theme: 'dark', suppressErrorRendering: true });
 
@@ -30,8 +31,11 @@ interface MarkdownViewerProps {
   onToggleZen?: () => void;
   onTriggerCheckpoint?: () => void;
   isCompleted?: boolean;
+  hasFailedQuiz?: boolean;
   hasNextNode?: boolean;
   onNextNode?: () => void;
+  quiz?: QuizQuestion[];
+  onOpenQuiz?: () => void;
 }
 
 export default function MarkdownViewer({ 
@@ -42,8 +46,11 @@ export default function MarkdownViewer({
   onToggleZen,
   onTriggerCheckpoint,
   isCompleted,
+  hasFailedQuiz,
   hasNextNode,
-  onNextNode
+  onNextNode,
+  quiz,
+  onOpenQuiz,
 }: MarkdownViewerProps) {
   return (
     <div className="flex flex-col h-full bg-slate-950/40 rounded-3xl overflow-hidden relative animate-in zoom-in-95 duration-500">
@@ -150,16 +157,43 @@ export default function MarkdownViewer({
             {content && (
               <div className="mt-16 pt-8 border-t border-slate-800/60 flex flex-col items-center justify-center text-center pb-8">
                 {!isCompleted ? (
-                  <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-8 max-w-md w-full shadow-2xl">
-                    <h3 className="text-xl font-bold text-slate-100 mb-2">Ready to move on?</h3>
-                    <p className="text-sm text-slate-400 mb-6">Test your knowledge to unlock the next lesson.</p>
-                    <button
-                      onClick={onTriggerCheckpoint}
-                      className="w-full py-3.5 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm transition-all duration-300 shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-1"
-                    >
-                      Take Checkpoint
-                    </button>
-                  </div>
+                  quiz && quiz.length > 0 ? (
+                    <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-8 max-w-md w-full shadow-2xl">
+                      <h3 className="text-xl font-bold text-slate-100 mb-2">Ready to move on?</h3>
+                      <p className="text-sm text-slate-400 mb-6">
+                        {hasFailedQuiz 
+                          ? "You missed the checkpoint. You must convince your AI Mentor that you understand the concepts before continuing."
+                          : "Test your knowledge to unlock the next lesson."}
+                      </p>
+                      
+                      {hasFailedQuiz ? (
+                        <button
+                          onClick={onTriggerCheckpoint}
+                          className="w-full py-3.5 px-6 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition-all duration-300 shadow-lg shadow-amber-500/20 hover:shadow-xl hover:-translate-y-1"
+                        >
+                          Resume Mentor Chat
+                        </button>
+                      ) : (
+                        <button
+                          onClick={onOpenQuiz}
+                          className="w-full py-3.5 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm transition-all duration-300 shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:-translate-y-1"
+                        >
+                          Take Checkpoint Quiz
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-8 max-w-md w-full shadow-2xl">
+                      <h3 className="text-xl font-bold text-slate-100 mb-2">Ready to move on?</h3>
+                      <p className="text-sm text-slate-400 mb-6">Test your knowledge to unlock the next lesson.</p>
+                      <button
+                        onClick={onTriggerCheckpoint}
+                        className="w-full py-3.5 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm transition-all duration-300 shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-1"
+                      >
+                        Take Checkpoint
+                      </button>
+                    </div>
+                  )
                 ) : hasNextNode ? (
                   <div className="bg-emerald-950/20 border border-emerald-900/40 rounded-3xl p-8 max-w-md w-full shadow-2xl">
                     <h3 className="text-xl font-bold text-emerald-400 mb-2">Checkpoint Passed! 🎉</h3>

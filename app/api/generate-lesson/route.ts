@@ -113,15 +113,34 @@ IMPORTANT RULES:
 - Adapt the complexity and vocabulary to the student's level: "${userLevel}"
 - Tailor examples and content depth toward their goal ("${userGoal}") and pace ("${userPace}")
 - Every section is MANDATORY — do not skip any
+
+OUTPUT FORMAT:
+Do NOT wrap the entire output in JSON. 
+First, output the entire 8-section markdown lesson normally.
+Then, at the very end of your response, output a markdown JSON code block containing the quiz.
+
+The JSON block MUST follow this exact format:
+\`\`\`json
+{
+  "quiz": [
+    {
+      "question": "Question text here...",
+      "options": ["A", "B", "C", "D"],
+      "correctAnswerIndex": 0,
+      "explanation": "Brief explanation of why this is correct."
+    }
+  ]
+}
+\`\`\`
 `;
 
-    let content = "";
+    let rawOutput = "";
 
     try {
       // Primary Engine: Gemini (Preferred for high quality)
       const model = getGeminiModel();
       const result = await model.generateContent(prompt);
-      content = result.response.text();
+      rawOutput = result.response.text();
     } catch (geminiError: any) {
       console.warn('Gemini failed (likely 503 High Demand). Silently falling back to Groq...', geminiError.message);
       
@@ -130,21 +149,56 @@ IMPORTANT RULES:
         messages: [
           {
             role: 'system',
-            content: 'You are an expert AI tutor. Your writing style MUST perfectly mimic Google\'s Gemini models. This means your writing should be extremely warm, deeply engaging, highly structured, and use markdown (like bolding and lists) beautifully to break up text. Never sound robotic. Sound like a brilliant, empathetic human teacher who explains complex concepts with perfect clarity and elegance.'
+            content: 'You are an expert AI tutor. Your writing style MUST perfectly mimic Google\'s Gemini models. This means your writing should be extremely warm, deeply engaging, highly structured, and use markdown (like bolding and lists) beautifully to break up text. You MUST end your response with the requested JSON block.'
           },
           { role: 'user', content: prompt }
         ],
         model: getGroqModelName(),
         temperature: 0.7,
       });
-      content = chatCompletion.choices[0]?.message?.content || "";
+      rawOutput = chatCompletion.choices[0]?.message?.content || "";
       
-      if (!content) {
+      if (!rawOutput) {
         throw new Error("Both Gemini and Groq failed to generate content.");
       }
     }
 
-    return NextResponse.json({ content });
+    // Parse the hybrid output
+    // Find the last ```json block
+    const jsonBlockRegex = /```json\s*([\s\S]*?)\s*```/g;
+    let match;
+    let lastJsonMatch = null;
+    
+    while ((match = jsonBlockRegex.exec(rawOutput)) !== null) {
+      lastJsonMatch = match;
+    }
+
+    if (!lastJsonMatch) {
+       console.error("No JSON block found in output:", rawOutput);
+       throw new Error("Invalid output format: Missing JSON block");
+    }
+
+    const jsonString = lastJsonMatch[1];
+    
+    // The markdown content is everything before the JSON block
+    const markdownContent = rawOutput.substring(0, lastJsonMatch.index).trim();
+
+    let parsedQuiz;
+    try {
+      parsedQuiz = JSON.parse(jsonString);
+    } catch (parseError) {
+      console.error("JSON Parse Error. Raw JSON:", jsonString);
+      throw parseError;
+    }
+    
+    if (!parsedQuiz.quiz || !Array.isArray(parsedQuiz.quiz)) {
+       throw new Error("Invalid JSON structure: Missing quiz array");
+    }
+
+    return NextResponse.json({ 
+      content: markdownContent,
+      quiz: parsedQuiz.quiz 
+    });
   } catch (error: any) {
     console.error('Lesson generation failed:', error);
     return NextResponse.json(

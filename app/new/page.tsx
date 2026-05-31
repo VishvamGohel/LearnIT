@@ -37,7 +37,17 @@ export default function NewTopicPage() {
         body: JSON.stringify({ topic, transcript })
       });
 
-      const data = await res.json();
+      let data;
+      const responseText = await res.text();
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse response as JSON. Response was:', responseText.slice(0, 100));
+        alert('Server returned an unexpected response. Please try again.');
+        setStatus('idle');
+        return;
+      }
+
       if (res.ok && data.nodes) {
         const firstNode = data.nodes[0];
         const roadmapId = `roadmap_${Date.now()}`;

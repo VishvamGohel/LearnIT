@@ -83,6 +83,33 @@ export default function WelcomeTutorialModal({ isOpen, onClose }: WelcomeTutoria
       )
     },
     {
+      title: "Knowledge Checks",
+      description: "Test your understanding with interactive quizzes at the end of each topic. Prove your mastery before moving forward.",
+      color: "from-blue-400 to-cyan-500",
+      renderVisual: () => (
+        <div className="w-full h-32 flex justify-center items-center relative">
+          {/* Faux background blur for quiz modal effect */}
+          <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px] z-0 rounded-xl" />
+          
+          <div className="w-full max-w-[220px] bg-slate-900 border border-slate-700/50 rounded-2xl p-4 shadow-2xl flex flex-col gap-3 relative z-10 shadow-blue-500/10">
+            {/* Question line */}
+            <div className="w-full h-1.5 bg-slate-600 rounded-full" />
+            <div className="w-4/5 h-1.5 bg-slate-600 rounded-full mb-1" />
+            
+            {/* Options */}
+            <div className="w-full h-7 bg-slate-800/50 border border-slate-700/50 rounded-lg flex items-center px-2 gap-2">
+               <div className="w-4 h-4 rounded bg-slate-700 flex items-center justify-center shrink-0" />
+               <div className="h-1 w-1/2 bg-slate-600 rounded-full" />
+            </div>
+            <div className="w-full h-7 bg-blue-500/10 border border-blue-500/40 rounded-lg flex items-center px-2 gap-2">
+               <div className="w-4 h-4 rounded-md bg-blue-500/30 border border-blue-500/50 flex items-center justify-center shrink-0" />
+               <div className="h-1 w-2/3 bg-blue-400/80 rounded-full" />
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
       title: "Socratic Mentorship",
       description: "We don't just give you the answers. To progress, you must pass Checkpoints. Our AI Tutor uses the Socratic method to guide you.",
       color: "from-emerald-400 to-teal-400",

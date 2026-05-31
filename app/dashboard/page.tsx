@@ -227,6 +227,7 @@ export default function DashboardPage() {
             <Sparkles className="w-4 h-4 text-slate-950" />
           </div>
           <span className="text-base font-bold text-slate-100 tracking-tight hidden sm:block">LearnIT</span>
+          <span className="hidden sm:block text-[10px] font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded ml-1">Beta</span>
         </div>
 
         <div className="flex items-center gap-3">
