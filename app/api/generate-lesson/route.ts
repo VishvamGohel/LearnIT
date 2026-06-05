@@ -6,17 +6,15 @@ import { z } from 'zod';
 export const maxDuration = 60;
 
 import { supabase } from '@/lib/supabase';
-import { pipeline, env } from '@xenova/transformers';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-env.allowLocalModels = false;
-env.useBrowserCache = false;
+// Gemini embedding client — uses text-embedding-004 (768 dimensions)
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-let extractorPipeline: any = null;
-async function getExtractor() {
-  if (!extractorPipeline) {
-    extractorPipeline = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
-  }
-  return extractorPipeline;
+async function getEmbedding(text: string): Promise<number[]> {
+  const model = genAI.getGenerativeModel({ model: 'text-embedding-004' });
+  const result = await model.embedContent(text);
+  return result.embedding.values;
 }
 
 const generateLessonSchema = z.object({
@@ -43,9 +41,7 @@ export async function POST(req: Request) {
     if (roadmapId) {
       try {
         const queryText = `${topic}. ${nodeTitle}: ${nodeDescription}`;
-        const extractor = await getExtractor();
-        const output = await extractor(queryText, { pooling: 'mean', normalize: true });
-        const queryEmbedding = Array.from(output.data);
+        const queryEmbedding = await getEmbedding(queryText);
 
         // Call the Supabase match function
         const { data: chunks, error: matchError } = await supabase.rpc('match_document_chunks', {

@@ -1,22 +1,16 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { pipeline, env } from '@xenova/transformers';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-export const maxDuration = 60; // Max allowed for Vercel Hobby
+export const maxDuration = 60;
 
-// Disable local models loading in production, if needed, but for now we let it download to cache
-env.allowLocalModels = false;
-env.useBrowserCache = false;
+// Gemini embedding client — uses text-embedding-004 (768 dimensions)
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-// Singleton to hold the pipeline so it's not reloaded on every request
-let extractorPipeline: any = null;
-
-async function getExtractor() {
-  if (!extractorPipeline) {
-    // all-MiniLM-L6-v2 is a great balance of size (22MB) and performance for semantic search
-    extractorPipeline = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
-  }
-  return extractorPipeline;
+async function getEmbedding(text: string): Promise<number[]> {
+  const model = genAI.getGenerativeModel({ model: 'text-embedding-004' });
+  const result = await model.embedContent(text);
+  return result.embedding.values;
 }
 
 // Helper function to chunk text
@@ -73,21 +67,12 @@ export async function POST(req: Request) {
     const cleanText = rawText.replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim();
     const chunks = chunkText(cleanText, 1000, 200);
 
-    // Get the embeddings pipeline
-    const extractor = await getExtractor();
-
-    // Process chunks and generate embeddings
+    // Process chunks and generate embeddings via Gemini API
     const documentChunks = [];
     
-    // We process sequentially here to avoid memory spikes, but could use Promise.all in batches
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
-      
-      // Generate embedding: output is a Tensor
-      const output = await extractor(chunk, { pooling: 'mean', normalize: true });
-      
-      // Convert Tensor to standard JS array
-      const embeddingArray = Array.from(output.data);
+      const embeddingArray = await getEmbedding(chunk);
 
       documentChunks.push({
         roadmap_id: roadmapId,
