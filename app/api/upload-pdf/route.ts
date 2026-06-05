@@ -7,10 +7,15 @@ export const maxDuration = 60;
 // Gemini embedding client — uses gemini-embedding-001 (768 dimensions)
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-async function getEmbedding(text: string): Promise<number[]> {
+// Batch-embeds all chunks in a SINGLE API call to avoid 429 rate limit errors
+async function batchGetEmbeddings(texts: string[]): Promise<number[][]> {
   const model = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
-  const result = await model.embedContent(text);
-  return result.embedding.values;
+  const result = await model.batchEmbedContents({
+    requests: texts.map(text => ({
+      content: { parts: [{ text }], role: 'user' },
+    }))
+  });
+  return result.embeddings.map(e => e.values);
 }
 
 // Helper function to chunk text
@@ -67,20 +72,15 @@ export async function POST(req: Request) {
     const cleanText = rawText.replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim();
     const chunks = chunkText(cleanText, 1000, 200);
 
-    // Process chunks and generate embeddings via Gemini API
-    const documentChunks = [];
-    
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i];
-      const embeddingArray = await getEmbedding(chunk);
+    // Embed ALL chunks in a single batch API call — avoids rate limit 429s
+    const embeddings = await batchGetEmbeddings(chunks);
 
-      documentChunks.push({
-        roadmap_id: roadmapId,
-        chunk_index: i,
-        content: chunk,
-        embedding: embeddingArray
-      });
-    }
+    const documentChunks = chunks.map((chunk, i) => ({
+      roadmap_id: roadmapId,
+      chunk_index: i,
+      content: chunk,
+      embedding: embeddings[i]
+    }));
 
     // Store in Supabase
     const { error } = await supabase
