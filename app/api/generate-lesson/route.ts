@@ -16,7 +16,7 @@ async function getEmbedding(text: string): Promise<number[]> {
   const result = await model.embedContent({
     content: { parts: [{ text }], role: 'user' },
     outputDimensionality: 768, // Match the vector(768) Supabase column
-  });
+  } as any);
   return result.embedding.values;
 }
 

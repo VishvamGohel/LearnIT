@@ -15,7 +15,7 @@ async function batchGetEmbeddings(texts: string[]): Promise<number[][]> {
       content: { parts: [{ text }], role: 'user' },
       outputDimensionality: 768, // Match the vector(768) Supabase column
     }))
-  });
+  } as any);
   return result.embeddings.map(e => e.values);
 }
 
