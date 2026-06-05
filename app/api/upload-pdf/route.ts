@@ -4,11 +4,11 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const maxDuration = 60;
 
-// Gemini embedding client — uses text-embedding-004 (768 dimensions)
+// Gemini embedding client — uses gemini-embedding-001 (768 dimensions)
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 async function getEmbedding(text: string): Promise<number[]> {
-  const model = genAI.getGenerativeModel({ model: 'text-embedding-004' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
   const result = await model.embedContent(text);
   return result.embedding.values;
 }
