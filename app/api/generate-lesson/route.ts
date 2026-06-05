@@ -13,7 +13,10 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 async function getEmbedding(text: string): Promise<number[]> {
   const model = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
-  const result = await model.embedContent(text);
+  const result = await model.embedContent({
+    content: { parts: [{ text }], role: 'user' },
+    outputDimensionality: 768, // Match the vector(768) Supabase column
+  });
   return result.embedding.values;
 }
 

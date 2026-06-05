@@ -13,6 +13,7 @@ async function batchGetEmbeddings(texts: string[]): Promise<number[][]> {
   const result = await model.batchEmbedContents({
     requests: texts.map(text => ({
       content: { parts: [{ text }], role: 'user' },
+      outputDimensionality: 768, // Match the vector(768) Supabase column
     }))
   });
   return result.embeddings.map(e => e.values);
