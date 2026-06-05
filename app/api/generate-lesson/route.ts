@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getGeminiModel } from '@/lib/gemini';
 import { groqClient, getGroqModelName } from '@/lib/groq';
 import { z } from 'zod';
+import { generateWithFallback } from '@/lib/ai';
 
 export const maxDuration = 60;
 

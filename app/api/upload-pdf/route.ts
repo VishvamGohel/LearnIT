@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { pipeline, env } from '@xenova/transformers';
 
+export const maxDuration = 60; // Max allowed for Vercel Hobby
+
 // Disable local models loading in production, if needed, but for now we let it download to cache
 env.allowLocalModels = false;
 env.useBrowserCache = false;
