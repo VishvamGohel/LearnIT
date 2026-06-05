@@ -7,6 +7,7 @@ export const maxDuration = 60;
 
 const generateRoadmapSchema = z.object({
   topic: z.string().min(1, "Topic is required").max(100, "Topic must be 100 characters or less"),
+  pdfText: z.string().optional(),
   transcript: z.array(
     z.object({
       id: z.string().optional(),
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
     if (!parseResult.success) {
       return NextResponse.json({ error: parseResult.error.issues[0]?.message || 'Invalid input' }, { status: 400 });
     }
-    const { topic, transcript } = parseResult.data;
+    const { topic, pdfText, transcript } = parseResult.data;
 
     // Extract user context from the assessment transcript
     const userMessages = transcript.filter((t: any) => t.role === 'user');
@@ -32,14 +33,18 @@ export async function POST(req: Request) {
     const userGoal = userMessages[1]?.content || 'general understanding';
     const userPace = userMessages[2]?.content || 'standard pace';
 
+    const baseContext = pdfText 
+      ? `The user has provided a source document (e.g., syllabus, textbook snippet). You MUST generate the roadmap strictly based on the structure and content of this document preview:\n\n--- DOCUMENT PREVIEW ---\n${pdfText}\n--- END PREVIEW ---\n\n` 
+      : `The user wants to learn about the topic: "${topic}".\n`;
+
     const prompt = `
 You are an expert curriculum designer and educator.
-The user wants to learn about the topic: "${topic}".
+${baseContext}
 Their experience level: "${userLevel}"
 Their primary goal: "${userGoal}"
 Their preferred pace/depth: "${userPace}"
 
-Based on their experience, generate a highly structured learning roadmap with exactly 3 to 5 sequential nodes.
+Based on the provided context, generate a highly structured learning roadmap with exactly 3 to 5 sequential nodes.
 For each node, you MUST provide:
 1. "title": A short, punchy title.
 2. "description": A brief 1-2 sentence description of what the learner will achieve.

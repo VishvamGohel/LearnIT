@@ -5,7 +5,22 @@ import { z } from 'zod';
 
 export const maxDuration = 60;
 
+import { supabase } from '@/lib/supabase';
+import { pipeline, env } from '@xenova/transformers';
+
+env.allowLocalModels = false;
+env.useBrowserCache = false;
+
+let extractorPipeline: any = null;
+async function getExtractor() {
+  if (!extractorPipeline) {
+    extractorPipeline = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+  }
+  return extractorPipeline;
+}
+
 const generateLessonSchema = z.object({
+  roadmapId: z.string().optional(),
   nodeTitle: z.string().min(1, "nodeTitle is required"),
   nodeDescription: z.string().min(1, "nodeDescription is required"),
   topic: z.string().min(1, "topic is required"),
@@ -21,12 +36,40 @@ export async function POST(req: Request) {
     if (!parseResult.success) {
       return NextResponse.json({ error: parseResult.error.issues[0]?.message || 'Invalid input' }, { status: 400 });
     }
-    const { nodeTitle, nodeDescription, topic, userLevel, userGoal, userPace } = parseResult.data;
+    const { roadmapId, nodeTitle, nodeDescription, topic, userLevel, userGoal, userPace } = parseResult.data;
+
+    // --- RAG LOGIC: Retrieve PDF chunks if roadmapId is provided ---
+    let pdfContext = "";
+    if (roadmapId) {
+      try {
+        const queryText = `${topic}. ${nodeTitle}: ${nodeDescription}`;
+        const extractor = await getExtractor();
+        const output = await extractor(queryText, { pooling: 'mean', normalize: true });
+        const queryEmbedding = Array.from(output.data);
+
+        // Call the Supabase match function
+        const { data: chunks, error: matchError } = await supabase.rpc('match_document_chunks', {
+          query_embedding: queryEmbedding,
+          match_threshold: 0.2, // Lower threshold to ensure we get some context
+          match_count: 5,
+          target_roadmap_id: roadmapId
+        });
+
+        if (!matchError && chunks && chunks.length > 0) {
+          pdfContext = `\n\n## SOURCE MATERIAL (MANDATORY)\nYou MUST base your lesson heavily on the following extracted text from the user's uploaded document. Do not invent contradictory facts. If the source material provides definitions or examples, use them.\n\n--- BEGIN SOURCE MATERIAL ---\n`;
+          pdfContext += chunks.map((c: any) => c.content).join('\n\n...\n\n');
+          pdfContext += `\n--- END SOURCE MATERIAL ---\n\n`;
+        }
+      } catch (ragError) {
+        console.error("RAG retrieval failed, falling back to general knowledge:", ragError);
+        // We gracefully fallback to normal generation if RAG fails
+      }
+    }
 
     const prompt = `
 You are a world-class educator and textbook author. Your task is to write an EXTREMELY detailed, 
 self-contained lesson that a student can read and fully understand WITHOUT a teacher.
-
+${pdfContext}
 ## Context
 - **Subject**: ${topic}
 - **Lesson Title**: ${nodeTitle}

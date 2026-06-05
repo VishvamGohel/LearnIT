@@ -16,6 +16,8 @@ export default function NewTopicPage() {
   const router = useRouter();
   const [status, setStatus] = useState<NewPageStatus>('idle');
   const [topic, setTopic] = useState('');
+  const [file, setFile] = useState<File | undefined>(undefined);
+  const [uploadStatus, setUploadStatus] = useState<string>('');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -23,18 +25,42 @@ export default function NewTopicPage() {
     }
   }, [user, loading, router]);
 
-  const handleTopicStart = (enteredTopic: string) => {
+  const handleTopicStart = (enteredTopic: string, uploadedFile?: File) => {
     setTopic(enteredTopic);
+    setFile(uploadedFile);
     setStatus('assessing');
   };
 
   const handleAssessmentComplete = async (transcript: ChatMessage[]) => {
     setStatus('generating');
     try {
+      const roadmapId = `roadmap_${Date.now()}`;
+      let pdfText = undefined;
+
+      if (file) {
+        setUploadStatus('Uploading and parsing document...');
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('roadmapId', roadmapId);
+
+        const uploadRes = await fetch('/api/upload-pdf', {
+          method: 'POST',
+          body: formData
+        });
+        const uploadData = await uploadRes.json();
+        if (!uploadRes.ok) {
+           alert('Failed to process PDF: ' + uploadData.error);
+           setStatus('idle');
+           return;
+        }
+        pdfText = uploadData.extractedTextPreview;
+        setUploadStatus('Document processed! Generating curriculum...');
+      }
+
       const res = await fetch('/api/generate-roadmap', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, transcript })
+        body: JSON.stringify({ topic, transcript, pdfText })
       });
 
       let data;
@@ -50,7 +76,6 @@ export default function NewTopicPage() {
 
       if (res.ok && data.nodes) {
         const firstNode = data.nodes[0];
-        const roadmapId = `roadmap_${Date.now()}`;
 
         const newRoadmap: Roadmap = {
           id: roadmapId,
@@ -173,7 +198,7 @@ export default function NewTopicPage() {
                 </div>
               </div>
               <div className="text-center">
-                <p className="text-slate-300 font-semibold">Building your curriculum...</p>
+                <p className="text-slate-300 font-semibold">{uploadStatus || 'Building your curriculum...'}</p>
                 <p className="text-slate-500 text-sm mt-1">
                   Crafting a personalized roadmap for{' '}
                   <span className="text-emerald-400 font-semibold">{topic}</span>

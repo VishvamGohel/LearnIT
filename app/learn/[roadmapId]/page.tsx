@@ -124,6 +124,7 @@ export default function LearnPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          roadmapId: currentRoadmap.id,
           nodeTitle: node.title,
           nodeDescription: node.description,
           topic: currentRoadmap.topic,
